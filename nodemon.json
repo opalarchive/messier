@@ -1,0 +1,6 @@
+{
+  "ignore": [".git", "node_modules/", "dist/", "css/"],
+  "watch": ["src/bot"],
+  "exec": "cross-env NODE_ENV=development ts-node --files ./src/bot/index.ts",
+  "ext": "ts"
+}
