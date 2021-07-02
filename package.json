@@ -11,6 +11,8 @@
     "ci": "install --frozen-lockfile"
   },
   "dependencies": {
+    "@headlessui/react": "^1.3.0",
+    "@heroicons/react": "^1.0.1",
     "@sentry/node": "^6.8.0",
     "@sentry/tracing": "^6.8.0",
     "axios": "^0.21.1",
