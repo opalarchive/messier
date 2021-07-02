@@ -26,6 +26,7 @@
     "winston-daily-rotate-file": "^4.5.5"
   },
   "devDependencies": {
+    "@lhci/cli": "^0.8.0",
     "@types/ioredis": "^4.26.4",
     "@types/node": "^15.12.5",
     "@types/react": "17.0.11",
