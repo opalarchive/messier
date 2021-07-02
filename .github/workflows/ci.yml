@@ -22,3 +22,5 @@ jobs:
       - run: npm install
       - run: npm build
       - run: npx lhci autorun
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
