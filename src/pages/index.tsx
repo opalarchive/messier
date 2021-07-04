@@ -83,7 +83,7 @@ export default function Home() {
           The go-to Discord bot for retrieving math problems, creating
           groupsolves, and more!
         </h2>
-        <div className="p-5 grid grid-cols-1 sm:grid-cols-2">
+        <div className="p-5 grid gap-4 grid-cols-1 sm:grid-cols-2">
           <div className="rounded-md grid-1 shadow">
             <a
               href="#"
