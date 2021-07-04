@@ -1,23 +1,24 @@
 import type { Message } from "eris";
-import type { ParsedArgs } from "typings/args";
+import type { ValidArgs } from "./Arg";
 import type Client from "./Client";
 
-export default abstract class Command {
-  aliases: string[] = [];
-  args?: string;
-  cooldown?: number;
-  requiredkeys?: string[] = [];
-  clientperms?: string[] = [];
-  requiredperms?: string[] = [];
-  allowdms = false;
-  allowdisable = true;
-  nsfw = false;
-  owner = false;
-  staff = false;
-  voice = false;
-  silent = false;
-
-  abstract description: string;
+export abstract class SubCommand {
+  public abstract description: string;
+  public aliases: string[] = [];
+  public cooldown?: number;
+  public args: {
+    name: string;
+    type: string;
+    optional?: boolean;
+    absorb?: boolean;
+  }[] = [];
+  public allowdms: boolean = false;
+  public owner: boolean = false;
+  public staff: boolean = false;
+  public silent: boolean = false;
+  public clientperms: string[] = [];
+  public reqperms: string[] = [];
+  public allowdisable: boolean = false;
 
   constructor(
     protected bot: Client,
@@ -27,8 +28,11 @@ export default abstract class Command {
 
   abstract run(
     msg: Message,
-    pargs?: ParsedArgs[],
-    args?: string[],
-    ...extra: any
+    parsedArgs: Map<string, ValidArgs>,
+    args: string[]
   ): Promise<unknown>;
+}
+
+export abstract class Command extends SubCommand {
+  public abstract subcommands: string[];
 }

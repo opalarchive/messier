@@ -5,7 +5,7 @@ import * as Sentry from "@sentry/node";
 import config from "../config";
 import * as colors from "tailwindcss/colors";
 import { convertHex } from "../utils";
-import type { ParsedArgs } from "typings/args";
+import type { Command } from "../classes/Command";
 
 const inviteRegex = /(https?:\/\/)?discord.(gg)\/[a-z0-9]+/i;
 
@@ -22,6 +22,8 @@ export class HandlerEvent extends Event {
     if (!msg || !msg.content || msg.author.bot || !msg.channel || !msg.author)
       return;
     let prefix = "";
+
+    msg.content = msg.content.toLowerCase();
 
     // DM Specific actions
     if (msg.channel instanceof PrivateChannel) {
@@ -60,6 +62,10 @@ export class HandlerEvent extends Event {
       prefix = userPrefix;
     else if (!guildconfig?.prefixes && prefixes !== -1)
       prefix = this.bot.config.prefixes[prefixes];
+    else if (msg.content.startsWith(`<@${this.bot.user.id}> `))
+      prefix = `<@${this.bot.user.id}> `;
+
+    if (!prefix) return;
 
     msg.prefix = prefix;
 
@@ -68,20 +74,32 @@ export class HandlerEvent extends Event {
       .trim()
       .slice(prefix.length)
       .split(/\s+/g);
-    const command = this.bot.commands.find(
-      (cmd) =>
-        cmd?.name === commandName.toLowerCase() ||
-        cmd?.aliases.includes(commandName.toLowerCase())
-    );
+    let command = this.bot.commands.get(commandName);
+
+    while (typeof command === "string")
+      command = this.bot.commands.get(command);
 
     if (!command) return;
 
+    let subcommand = this.bot.subcommands.get(command.name)?.get(args[0]);
+
+    while (typeof subcommand === "string")
+      subcommand = this.bot.subcommands.get(command.name)?.get(args[0]);
+
+    if (subcommand) args.shift();
+
     // Handles owner commands
-    if (command.owner && !this.bot.config.owners.includes(msg.author.id))
+    if (
+      (command.owner || subcommand?.owner) &&
+      !this.bot.config.owners.includes(msg.author.id)
+    )
       return;
 
     // Handles commands in DMs
-    if (!command.allowdms && msg.channel instanceof PrivateChannel)
+    if (
+      (!command.allowdms || (subcommand && !subcommand.allowdms)) &&
+      msg.channel instanceof PrivateChannel
+    )
       return msg.channel.sendMessage({
         embed: {
           title: "❌ That action can't be done!",
@@ -104,7 +122,12 @@ export class HandlerEvent extends Event {
           });
 
         // Disabled commands
-        if (guildconfig?.disabledCmds?.includes(command.name))
+        if (
+          guildconfig?.disabledCmds?.includes(command.name) ||
+          guildconfig?.disabledCmds?.includes(
+            `${command.name}/${subcommand?.name}`
+          )
+        )
           return msg.channel.sendMessage({
             embed: {
               title: "❌ That action can't be done!",
@@ -115,7 +138,7 @@ export class HandlerEvent extends Event {
       }
 
       // Handles staff commands
-      if (command.staff) {
+      if (command.staff || subcommand?.staff) {
         if (
           !msg.member?.permissions?.has("administrator") &&
           guildconfig?.staffRole &&
@@ -194,10 +217,10 @@ export class HandlerEvent extends Event {
           });
       }
 
-      // Handles commands with requiredPerms
-      if (command.requiredperms?.length && !guildconfig?.staffRole) {
+      // Handles commands with reqperms
+      if (command.reqperms?.length && !guildconfig?.staffRole) {
         const missingPerms: string[] = [];
-        command.requiredperms.forEach((perm: any) => {
+        command.reqperms.forEach((perm: any) => {
           if (!msg.member?.permissions?.has(perm)) missingPerms.push(perm);
         });
 
@@ -223,17 +246,18 @@ export class HandlerEvent extends Event {
       if (cooldown) return msg.addReaction("⌛");
       this.bot.cooldowns.set(command.name + msg.author.id, new Date());
       setTimeout(() => {
-        this.bot.cooldowns.delete(command.name + msg.author.id);
+        this.bot.cooldowns.delete((command as Command).name + msg.author.id);
       }, command.cooldown);
     }
 
     // Handles command arguments
-    let parsedArgs: ParsedArgs[] = [];
-    if (command.args) {
+    let parsedArgs = new Map();
+    if (command.args || subcommand?.args) {
       // Parses arguments and sends if missing any
-      parsedArgs = await this.bot.args.parse(command.args, args.join(" "), msg);
-      const missingargs = parsedArgs.filter((a) => {
-        return typeof a.value == "undefined" && !a.optional;
+      const cmdArgs = subcommand ? subcommand.args : command.args;
+      parsedArgs = await this.bot.args.parse(cmdArgs, args.join(" "), msg);
+      const missingargs = cmdArgs.filter((el) => {
+        return !el.optional && parsedArgs.get(el.name) === undefined;
       });
 
       if (missingargs.length) {
@@ -248,7 +272,9 @@ export class HandlerEvent extends Event {
             fields: [
               {
                 name: "Help",
-                value: `To find more information, run ${msg.prefix}help ${command.name}`,
+                value: `To find more information, run \`${msg.prefix}help ${
+                  command.name
+                }${subcommand ? ` ${subcommand.name}` : ""}\`.`,
               },
             ],
             color: convertHex(colors.red["500"]),
@@ -276,8 +302,11 @@ export class HandlerEvent extends Event {
 
     try {
       // Runs the command & emits typing if it isn't silent
-      if (command.silent !== true) await msg.channel.sendTyping();
-      await command.run(msg, parsedArgs, args);
+      if (command.silent !== true || subcommand?.silent !== true)
+        await msg.channel.sendTyping();
+      subcommand
+        ? await subcommand.run(msg, parsedArgs, args)
+        : await command.run(msg, parsedArgs, args);
     } catch (err: unknown) {
       // Captures exceptions with Sentry
       Sentry.configureScope((scope) => {

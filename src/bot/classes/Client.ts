@@ -6,30 +6,35 @@ import config from "../config";
 import path from "path";
 import Args from "./Arg";
 import * as db from "./Database";
-import type Command from "./Command";
+import type { Command, SubCommand } from "./Command";
 import type Event from "./Event";
 import type { Dirent } from "fs";
 
 export default class BotClient extends Client {
   public log: typeof logger;
-  public commands: Command[];
+  public categories: Map<string, Set<string>>;
+  public commands: Map<string, Command | string>;
+  public commandInfo: { [key: string]: number } = {};
+  public subcommands: Map<string, Map<string, SubCommand | string>>;
   public events: Event[];
   public config;
   public db;
   public cooldowns: Map<string, Date>;
-  public args: Args;
   public logs: BotLogs[];
+  public args: Args;
 
   constructor(token: string, options: ClientOptions) {
     super(token, options);
 
     this.log = logger;
-    this.commands = [];
+    this.commands = new Map();
+    this.subcommands = new Map();
     this.events = [];
     this.config = config;
     this.db = db;
-    this.cooldowns = new Map();
     this.args = new Args(this);
+    this.cooldowns = new Map();
+    this.categories = new Map();
     this.logs = [];
 
     try {
@@ -47,38 +52,124 @@ export default class BotClient extends Client {
     this.once("ready", async () => this.load());
   }
 
+  async loadCommand(path: string, category: string) {
+    const files = await readdir(path, { withFileTypes: true });
+
+    const main = files.find(
+      (file) => file.name === "index.ts" || file.name === "index.js"
+    );
+
+    if (!main) {
+      const err = `Main command for ${path} was not found.`;
+
+      console.error(err);
+      this.log.error(err);
+      return;
+    }
+
+    const importedCommand = require(`${path}/${main.name}`);
+    let command = importedCommand.default;
+
+    const cmd = new command(this, path.split("/").last(), category) as Command;
+
+    this.commands.set(cmd.name, cmd);
+    this.categories.set(
+      category,
+      this.categories.get(category)?.add(cmd.name) ||
+        new Set<string>().add(cmd.name)
+    );
+
+    const mainCommandName = cmd.name;
+
+    this.commandInfo[category]++;
+
+    cmd.aliases?.forEach((alias: string) => this.commands.set(alias, cmd.name));
+
+    files.forEach((file: Dirent) => {
+      if (file.isDirectory()) return;
+      if (file.name === main.name) return;
+
+      let command;
+      if (!file.name.endsWith("ts") && !file.name.endsWith("js")) return;
+
+      try {
+        const importedCommand = require(`${path}/${file.name}`);
+        command = importedCommand.default;
+      } catch (err) {
+        console.error(err);
+        this.log.error(err);
+      }
+
+      if (!command) return;
+
+      const cmd = new command(
+        this,
+        file.name.split(/\.(js|ts)$/i)[0],
+        category
+      ) as SubCommand;
+
+      const map = this.subcommands.get(mainCommandName) || new Map();
+
+      map.set(cmd.name, cmd);
+
+      cmd.aliases.forEach((alias) => map.set(alias, cmd.name));
+
+      this.subcommands.set(mainCommandName, map);
+    });
+
+    this.commandInfo.total++;
+  }
+
   async loadCommands(path: string, recurse?: boolean) {
     const files = await readdir(path, { withFileTypes: true });
+    this.commandInfo.total = 0;
 
     await Promise.all(
       files.map(async (file: Dirent) => {
-        if (file.isDirectory())
-          return await this.loadCommands(`${path}/${file.name}`, true);
-
-        let command;
-        if (!file.name.endsWith("ts") && !file.name.endsWith("js")) return;
-
-        try {
-          const importedCommand = require(`${path}/${file.name}`);
-          command = importedCommand[Object.keys(importedCommand)[0]];
-        } catch (err) {
-          console.log(err);
-          this.log.error(err);
+        if (file.isDirectory()) {
+          if (!recurse) {
+            this.commandInfo[file.name || ""] = 0;
+            return await this.loadCommands(`${path}/${file.name}`, true);
+          }
+          return this.loadCommand(
+            `${path}/${file.name}`,
+            path.split("/").last() || ""
+          );
         }
 
-        if (!command) return;
+        const main = files.find(
+          (file) => file.name === "index.ts" || file.name === "index.js"
+        );
+
+        if (!main) throw new Error(`Main command for ${path} was not found.`);
+
+        const importedCommand = require(`${path}/${main.name}`);
+        let command = importedCommand.default;
+
+        this.commandInfo[path.split("/").reverse()[1] || ""]++;
 
         const cmd = new command(
           this,
-          file.name.split(/\.(js|ts)$/i)[0],
-          path.split("/").last()
+          main.name.split(/\.(js|ts)$/i)[0],
+          path.split("/").reverse()[1]
         ) as Command;
 
-        return this.commands.push(cmd);
+        this.commands.set(cmd.name, cmd);
+        this.categories.set(
+          path.split("/").reverse()[1],
+          this.categories.get(path.split("/").reverse()[1])?.add(cmd.name) ||
+            new Set<string>().add(cmd.name)
+        );
+
+        command.aliases?.forEach((alias: string) =>
+          this.commands.set(alias, cmd.name)
+        );
+
+        this.commandInfo.total++;
       })
     );
 
-    if (!recurse) this.log.info(`Loaded ${this.commands.length} commands.`);
+    if (!recurse) this.log.info(`Loaded ${this.commandInfo.total} commands.`);
   }
 
   async loadEvents(path: string) {
