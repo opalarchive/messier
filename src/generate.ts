@@ -7,7 +7,7 @@ const path = require("path");
 import type { Dirent } from "fs";
 
 let commands = {};
-let client = new Client("", {});
+let client = new Client("", { intents: 0 });
 
 if (!Array.prototype.last) {
   Array.prototype.last = function () {
