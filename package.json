@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "generate && next build",
+    "build": "yon generate && next build",
     "start": "next start",
     "lint": "next lint",
     "bot": "nodemon",
@@ -48,6 +48,7 @@
     "postcss": "^8.3.5",
     "tailwindcss": "^2.2.4",
     "ts-node": "^10.0.0",
-    "typescript": "4.3.4"
+    "typescript": "4.3.4",
+    "yarn-or-npm": "^3.0.1"
   }
 }
