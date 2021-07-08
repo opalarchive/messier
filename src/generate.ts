@@ -47,7 +47,7 @@ async function loadCommand(path: string, category: string) {
 
   commands[category][cmd.name] = {
     aliases: cmd.aliases,
-    arguments: cmd.args,
+    args: cmd.args,
     description: cmd.description,
     cooldown: cmd.cooldown || 0,
     staff: cmd.staff,
@@ -84,7 +84,7 @@ async function loadCommand(path: string, category: string) {
     commands[category][mainCommandName].subcommands[cmd.name] = {
       aliases: cmd.aliases,
       description: cmd.description,
-      arguments: cmd.args,
+      args: cmd.args,
       cooldown: cmd.cooldown,
       staff: cmd.staff,
     };
@@ -126,7 +126,7 @@ async function loadCommands(path: string, recurse?: boolean) {
 
       commands[cmd.category][cmd.name] = {
         aliases: cmd.aliases,
-        arguments: cmd.args,
+        args: cmd.args,
         description: cmd.description,
         cooldown: cmd.cooldown,
         staff: cmd.staff,
