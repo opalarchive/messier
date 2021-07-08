@@ -33,5 +33,14 @@ yarn-error.log*
 # vercel
 .vercel
 
+# logs
+logs/
+
+# lighthouse run
+.lighthouseci
+
+# TypeScript build
+dist
+
 # commands
 commands.json
