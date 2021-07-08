@@ -5,7 +5,7 @@
     "alwaysStrict": true,
     "baseUrl": "./src",
     "checkJs": false,
-    "declaration": true,
+    "declaration": false,
     "emitDecoratorMetadata": true,
     "esModuleInterop": true,
     "experimentalDecorators": true,
@@ -38,10 +38,10 @@
     "suppressImplicitAnyIndexErrors": true,
     "target": "es2020",
     "typeRoots": [
-      "./src/typings"
+      "./src/typings/*.d.ts"
     ],
     "forceConsistentCasingInFileNames": true,
-    "isolatedModules": true,
+    "isolatedModules": false,
     "jsx": "preserve"
   },
   "exclude": [

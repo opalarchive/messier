@@ -3,7 +3,7 @@ import * as winston from "winston";
 import "winston-daily-rotate-file";
 
 const level = process.env.NODE_ENV === "development" ? "verbose" : "info";
-const LOGS_DIRECTORY = path.join(process.cwd(), "logs");
+const LOGS_DIRECTORY = path.join(process.cwd(), "logs/bot");
 
 // Color overrides
 const logColors = {

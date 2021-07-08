@@ -1,11 +1,10 @@
-import type { Message } from "eris";
-import { PrivateChannel, TextChannel } from "eris";
 import Event from "../classes/Event";
 import * as Sentry from "@sentry/node";
 import config from "../config";
 import * as colors from "tailwindcss/colors";
-import { convertHex } from "../utils";
+import { convertHex, isPrivateChannel } from "../utils";
 import type { Command } from "../classes/Command";
+import type { Message } from "eris";
 
 const inviteRegex = /(https?:\/\/)?discord.(gg)\/[a-z0-9]+/i;
 
@@ -18,33 +17,35 @@ const tokenRegex = new RegExp(tokens.join("|"), "g");
 export class HandlerEvent extends Event {
   events = ["messageCreate"];
 
-  async run(_event: string, msg: Message<TextChannel | PrivateChannel>) {
+  async run(_event: string, msg: Message) {
     if (!msg || !msg.content || msg.author.bot || !msg.channel || !msg.author)
       return;
     let prefix = "";
 
+    if (!msg.channel.createMessage)
+      msg.channel = await msg.author.getDMChannel();
+
+    msg.originalContent = msg.content;
     msg.content = msg.content.toLowerCase();
 
     // DM Specific actions
-    if (msg.channel instanceof PrivateChannel) {
+    if (isPrivateChannel(msg.channel)) {
       if (inviteRegex.test(msg.content)) {
         return msg.inlineReply({
           embed: {
             title: "Invite Me!",
-            description:
-              "You can invite me by clicking [this link](https://discord.com/oauth2/authorize?&client_id=${this.bot.user.id}&scope=bot&permissions=1581116663) or going to [https://www.messier.dev/invite](https://www.messier.dev/invite).\n\n**Need Support?** Join the support server at [https://discord.gg/pxbxRDBQHp](https://discord.gg/pxbxRDBQHp) or [https://www.messier.dev/discord](https://www.messier.dev/discord).",
+            description: `You can invite me by clicking [this link](https://discord.com/oauth2/authorize?&client_id=${this.bot.user.id}&scope=bot&permissions=2147806272) or going to [https://www.messier.dev/invite](https://www.messier.dev/invite).\n\n**Need Support?** Join the support server at [https://discord.gg/pxbxRDBQHp](https://discord.gg/pxbxRDBQHp) or [https://www.messier.dev/discord](https://www.messier.dev/discord).`,
             color: convertHex(colors.green["500"]),
           },
         });
       }
     }
 
-    const guildconfig: GuildConfig | undefined =
-      msg.channel instanceof TextChannel
-        ? await this.bot.db.getGuildConfig(
-            msg.channel.guild ? msg.channel.guild.id : ""
-          )
-        : undefined;
+    const guildconfig: GuildConfig | undefined = !isPrivateChannel(msg.channel)
+      ? await this.bot.db.getGuildConfig(
+          msg.channel.guild ? msg.channel.guild.id : ""
+        )
+      : undefined;
     // Finds what prefix to use
     const mentionRegex = new RegExp(`<@!?${this.bot.user.id}> ?`);
     const mentionPrefix = mentionRegex.exec(msg.content);
@@ -98,7 +99,7 @@ export class HandlerEvent extends Event {
     // Handles commands in DMs
     if (
       (!command.allowdms || (subcommand && !subcommand.allowdms)) &&
-      msg.channel instanceof PrivateChannel
+      isPrivateChannel(msg.channel)
     )
       return msg.channel.sendMessage({
         embed: {
@@ -109,7 +110,7 @@ export class HandlerEvent extends Event {
       });
 
     // Handles guild options
-    if (msg.channel instanceof TextChannel) {
+    if (!isPrivateChannel(msg.channel)) {
       if (command.allowdisable !== false) {
         // Disabled categories
         if (guildconfig?.disabledCategories?.includes(command.category))
@@ -286,16 +287,15 @@ export class HandlerEvent extends Event {
     // Logs when a command is ran
     this.bot.log.info(
       `<@${msg.author}> ran ${command.name} in ${
-        msg.channel instanceof PrivateChannel ? "DMs" : msg.channel.guild?.name
+        isPrivateChannel(msg.channel) ? "DMs" : msg.channel.guild?.name
       }${args.length ? `: ${args}` : ""}`
     );
     this.bot.logs.push({
       cmdName: command.name,
       authorID: msg.author.id,
-      guildID:
-        msg.channel instanceof PrivateChannel
-          ? msg.author.id
-          : msg.channel.guild.id,
+      guildID: isPrivateChannel(msg.channel)
+        ? msg.author.id
+        : msg.channel.guild?.id,
       args: args,
       date: msg.timestamp,
     });
@@ -308,27 +308,27 @@ export class HandlerEvent extends Event {
         ? await subcommand.run(msg, parsedArgs, args)
         : await command.run(msg, parsedArgs, args);
     } catch (err: unknown) {
-      // Captures exceptions with Sentry
-      Sentry.configureScope((scope) => {
-        scope.setUser({ id: msg.author.id, username: `<@${msg.author.id}>` });
-        scope.setExtra(
-          "guild",
-          msg.channel instanceof PrivateChannel
-            ? "DMs"
-            : msg.channel.guild?.name
-        );
-        scope.setExtra(
-          "guildID",
-          msg.channel instanceof PrivateChannel
-            ? msg.author.id
-            : msg.channel.guild?.name
-        );
-      });
+      if (process.env.NODE_ENV === "production") {
+        // Captures exceptions with Sentry
+        Sentry.configureScope((scope) => {
+          scope.setUser({ id: msg.author.id, username: `<@${msg.author.id}>` });
+          scope.setExtra(
+            "guild",
+            isPrivateChannel(msg.channel) ? "DMs" : msg.channel.guild?.name
+          );
+          scope.setExtra(
+            "guildID",
+            isPrivateChannel(msg.channel)
+              ? msg.author.id
+              : msg.channel.guild?.name
+          );
+        });
 
-      // Logs the error
-      Sentry.captureException(err);
-      console.error(err);
+        // Logs the error
+        Sentry.captureException(err);
+      }
       this.bot.log.error(err);
+
       msg.channel.sendMessage({
         embed: {
           title: "<:error:837489379345694750> I ran into an error!",

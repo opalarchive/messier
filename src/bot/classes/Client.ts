@@ -6,6 +6,7 @@ import config from "../config";
 import path from "path";
 import Args from "./Arg";
 import * as db from "./Database";
+import Interaction from "./Interaction";
 import type { Command, SubCommand } from "./Command";
 import type Event from "./Event";
 import type { Dirent } from "fs";
@@ -22,6 +23,7 @@ export default class BotClient extends Client {
   public cooldowns: Map<string, Date>;
   public logs: BotLogs[];
   public args: Args;
+  public interactions: Interaction;
 
   constructor(token: string, options: ClientOptions) {
     super(token, options);
@@ -36,6 +38,7 @@ export default class BotClient extends Client {
     this.cooldowns = new Map();
     this.categories = new Map();
     this.logs = [];
+    this.interactions = new Interaction(this);
 
     try {
       init(config.sentry);
@@ -62,15 +65,17 @@ export default class BotClient extends Client {
     if (!main) {
       const err = `Main command for ${path} was not found.`;
 
-      console.error(err);
-      this.log.error(err);
-      return;
+      return this.log.error(err);
     }
 
     const importedCommand = require(`${path}/${main.name}`);
     let command = importedCommand.default;
 
-    const cmd = new command(this, path.split("/").last(), category) as Command;
+    const cmd = new command(
+      this,
+      path.split("/").last()?.toLowerCase(),
+      category
+    ) as Command;
 
     this.commands.set(cmd.name, cmd);
     this.categories.set(
@@ -83,7 +88,14 @@ export default class BotClient extends Client {
 
     this.commandInfo[category]++;
 
-    cmd.aliases?.forEach((alias: string) => this.commands.set(alias, cmd.name));
+    cmd.aliases
+      ?.map((el) => el.toLowerCase())
+      .filter((el) => el !== cmd.name)
+      .forEach((alias: string) => this.commands.set(alias, cmd.name));
+
+    Object.keys(cmd.interactions).map((el) =>
+      this.interactions.setComponentInteraction(el, cmd.interactions[el])
+    );
 
     files.forEach((file: Dirent) => {
       if (file.isDirectory()) return;
@@ -96,7 +108,6 @@ export default class BotClient extends Client {
         const importedCommand = require(`${path}/${file.name}`);
         command = importedCommand.default;
       } catch (err) {
-        console.error(err);
         this.log.error(err);
       }
 
@@ -112,12 +123,19 @@ export default class BotClient extends Client {
 
       map.set(cmd.name, cmd);
 
-      cmd.aliases.forEach((alias) => map.set(alias, cmd.name));
+      cmd.aliases
+        ?.map((el) => el.toLowerCase())
+        .filter((el) => el !== cmd.name)
+        .forEach((alias: string) => this.commands.set(alias, cmd.name));
+
+      Object.keys(cmd.interactions).map((el) =>
+        this.interactions.setComponentInteraction(el, cmd.interactions[el])
+      );
 
       this.subcommands.set(mainCommandName, map);
     });
 
-    this.commandInfo.total++;
+    return this.commandInfo.total++;
   }
 
   async loadCommands(path: string, recurse?: boolean) {
@@ -165,6 +183,10 @@ export default class BotClient extends Client {
           this.commands.set(alias, cmd.name)
         );
 
+        Object.keys(cmd.interactions).map((el) =>
+          this.interactions.setComponentInteraction(el, cmd.interactions[el])
+        );
+
         this.commandInfo.total++;
       })
     );
@@ -187,7 +209,6 @@ export default class BotClient extends Client {
         const importedEvent = require(`${path}/${file.name}`);
         event = importedEvent[Object.keys(importedEvent)[0]];
       } catch (err) {
-        console.error(err);
         bot.log.error(`Event ${file.name} failed to load: ${err}`);
       }
 

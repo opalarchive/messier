@@ -6,7 +6,6 @@ interface GuildConfig {
   guildLocale?: string;
   prefixes?: string[];
   staffRole?: string;
-  verifiedRole?: string;
 }
 
 interface BlacklistInfo {

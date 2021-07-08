@@ -5,7 +5,14 @@ import { FC, useState, useEffect } from "react";
 import { Disclosure } from "@headlessui/react";
 import { RiArrowDownSLine, RiArrowRightSLine } from "react-icons/ri";
 import properCase from "../bot/utils/properCase";
-import commands from "../../commands.json";
+
+let commands = {};
+
+try {
+  commands = require("../../commands.json");
+} catch (e) {
+  console.log("No commands found.");
+}
 
 type Argument = {
   name: string;
@@ -15,20 +22,23 @@ type Argument = {
 const Command: FC<{
   name: string;
   args?: Argument[];
-  cooldown?: Number;
+  cooldown?: number;
   description: string;
-}> = ({ name, args }) => (
+}> = ({ name, args, cooldown, description }) => (
   <div>
     <Disclosure>
       {({ open }) => (
         <>
           <Disclosure.Button className="flex w-full justify-between">
             <p>
-              <span className="text-white">{name}</span>
+              <span className="text-white text-lg">{name}</span>
               {!!args
                 ? args.map((el, idx) => (
-                    <span key={`arg-${idx}`} className="text-gray-200">
-                      {el.name}
+                    <span key={`arg-${idx}`} className="text-gray-400 text-lg">
+                      {/*
+                       * TO-DO learn how to put conditional here (ideally ternary)
+                       */}
+                      {!!el.optional ? ` [${el.name}]` : ` (${el.name})`}
                     </span>
                   ))
                 : null}
@@ -39,6 +49,14 @@ const Command: FC<{
               <RiArrowRightSLine></RiArrowRightSLine>
             )}
           </Disclosure.Button>
+          <Disclosure.Panel>
+            <p>{description}</p>
+            {!!cooldown ? (
+              <p className="text-gray-400">
+                Cooldown: {cooldown / 1000} seconds
+              </p>
+            ) : null}
+          </Disclosure.Panel>
         </>
       )}
     </Disclosure>
@@ -49,21 +67,21 @@ const Category: FC<{ selected?: boolean; name: string }> = ({
   name,
   selected,
 }) => (
-  <div
-    className={`rounded-md w-full text-center text-xl cursor-pointer p-2 ${
-      selected ? "bg-green-900" : "bg-green-800"
-    }`}
+  <Link
+    href={{
+      query: name === "All" ? {} : { category: name.toLowerCase() },
+    }}
+    shallow
+    passHref
   >
-    <Link
-      href={{
-        query: name === "All" ? {} : { category: name.toLowerCase() },
-      }}
-      shallow
-      passHref
+    <a
+      className={`rounded-md w-full text-center text-xl cursor-pointer px-8 py-2 ${
+        selected ? "bg-blue-900" : "bg-blue-800"
+      }`}
     >
-      <a>{name}</a>
-    </Link>
-  </div>
+      {name}
+    </a>
+  </Link>
 );
 
 const categories = Object.keys(commands).map((el) => properCase(el));
@@ -85,10 +103,10 @@ const Commands: FC<{}> = () => {
           content="Commands for the Messier Discord bot, a bot which allows you to manage solutions to problems from common math contests."
         />
       </Head>
-      <div className="py-16 px-4 flex bg-green-800 justify-center items-center flex-col">
+      <div className="py-16 px-4 flex bg-blue-800 justify-center items-center flex-col">
         <h1 className="text-6xl sm:text-6xl font-black my-2.5">Commands</h1>
         <h2 className="text-4xl sm:text-4xl text-center my-2.5">
-          List of bot commands for Discord
+          List of Messier Commands
         </h2>
       </div>
       <div className="justify-center items-center flex flec-col">
@@ -120,6 +138,7 @@ const Commands: FC<{}> = () => {
             <Command
               name="Rama"
               args={[{ name: "rating", optional: false }]}
+              cooldown={5000}
               description="Worship our lord Rama"
             />
           </div>

@@ -1,10 +1,10 @@
 import { Command } from "../../../classes/Command";
 import colors from "tailwindcss/colors";
-import { convertHex, tagUser } from "../../../utils";
-import { getGuildConfig } from "../../../classes/Database";
+import { convertHex, tagUser, isPrivateChannel } from "../../../utils";
+import { getPrefixes } from "../../../classes/Database";
 import type { ValidArgs } from "../../../classes/Arg";
 import type Client from "../../../classes/Client";
-import { Message, PrivateChannel } from "eris";
+import type { Message } from "eris";
 
 export default class Prefix extends Command {
   description =
@@ -24,26 +24,18 @@ export default class Prefix extends Command {
   async run(msg: Message, _pargs: Map<string, ValidArgs>, _args: string[]) {
     let prefixes: string[] = this.bot.config.prefixes;
 
-    if (!(msg.channel instanceof PrivateChannel)) {
-      const guildConfig = (await getGuildConfig(msg.channel.guild.id)) || {
-        id: msg.channel.guild.id,
-      };
-
-      console.log(guildConfig.prefixes);
-
-      if (guildConfig.prefixes) prefixes = guildConfig.prefixes;
+    if (!isPrivateChannel(msg.channel)) {
+      prefixes = [`<@${this.bot.user.id}> `].concat(
+        await getPrefixes(msg.channel.guild.id)
+      );
     }
 
-    prefixes.unshift(`<@${this.bot.user.id}> `);
-
-    prefixes = [...new Set(prefixes)];
-
-    msg.channel.sendMessage({
+    return await msg.channel.sendMessage({
       embed: {
         title: "My prefixes",
         color: convertHex(colors.green["500"]),
         description: `Here are my prefixes${
-          msg.channel instanceof PrivateChannel ? "" : " for this server"
+          isPrivateChannel(msg.channel) ? "" : " for this server"
         }:\n\n${prefixes
           .map((prefix, idx) => `\`${idx + 1}.\` ${prefix}`)
           .join("\n")}`,

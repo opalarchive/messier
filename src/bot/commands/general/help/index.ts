@@ -64,15 +64,17 @@ export default class Help extends Command {
   ) {
     if (this.dmUser) {
       try {
-        (await msg.author.getDMChannel()).sendMessage(content, file);
+        return await (
+          await msg.author.getDMChannel()
+        ).sendMessage(content, file);
       } catch (_err) {
-        msg.inlineReply(content, false, file);
+        return await msg.inlineReply(content, false, file);
       }
-    } else msg.inlineReply(content, false, file);
+    } else return await msg.inlineReply(content, false, file);
   }
 
-  generalHelpCommand(msg: Message) {
-    return this.sendInfo(msg, {
+  async generalHelpCommand(msg: Message) {
+    return await this.sendInfo(msg, {
       embed: {
         title: "Messier Help",
         color: convertHex(colors[Object.keys(colors).random(1)[0]]["500"]),
@@ -85,6 +87,7 @@ export default class Help extends Command {
             }help ${category}\`\n[Hover for Information](https://messier.dev/commands?category=${category} "${this.getDescription(
               category
             )} ${this.getLoadedCommands(category)}")`,
+            inline: false,
           })
         ),
         footer: {
@@ -95,12 +98,12 @@ export default class Help extends Command {
     });
   }
 
-  categoryHelpCommand(msg: Message, category: string) {
+  async categoryHelpCommand(msg: Message, category: string) {
     let commands;
     if (!(commands = this.bot.categories.get(category)))
       throw new Error("Invalid Category");
 
-    return this.sendInfo(msg, {
+    return await this.sendInfo(msg, {
       embed: {
         title: `**${this.getEmoji(category)}  ${properCase(category)}**`,
         color: convertHex(colors[Object.keys(colors).random(1)[0]]["500"]),
@@ -199,12 +202,12 @@ export default class Help extends Command {
     return fields;
   }
 
-  commandHelpCommand(
+  async commandHelpCommand(
     msg: Message,
     command: Command | SubCommand,
     higherCommand?: string
   ) {
-    return this.sendInfo(msg, {
+    return await this.sendInfo(msg, {
       embed: {
         title: `**${properCase(higherCommand || command.name)}**`,
         description: command.description,
@@ -219,12 +222,12 @@ export default class Help extends Command {
   }
 
   async run(msg: Message, parsedArgs: Map<string, ValidArgs>, _args: string[]) {
-    if (!parsedArgs.get("command")) return this.generalHelpCommand(msg);
+    if (!parsedArgs.get("command")) return await this.generalHelpCommand(msg);
 
     const firstArg = parsedArgs.get("command")?.split(" ")[0] || "";
 
     if (this.bot.categories.get(firstArg))
-      return this.categoryHelpCommand(msg, firstArg);
+      return await this.categoryHelpCommand(msg, firstArg);
 
     let command;
     if ((command = this.bot.commands.get(firstArg))) {
@@ -242,11 +245,11 @@ export default class Help extends Command {
         while (typeof subcommand === "string")
           subcommand = this.bot.subcommands.get(command.name)?.get(subcommand);
         if (!subcommand) throw new Error("Subcommand not found");
-        return this.commandHelpCommand(msg, subcommand, command.name);
+        return await this.commandHelpCommand(msg, subcommand, command.name);
       }
-      return this.commandHelpCommand(msg, command);
+      return await this.commandHelpCommand(msg, command);
     }
 
-    return this.generalHelpCommand(msg);
+    return await this.generalHelpCommand(msg);
   }
 }

@@ -1,9 +1,9 @@
 import { Command } from "../../../classes/Command";
 import colors from "tailwindcss/colors";
-import { convertHex, tagUser } from "../../../utils";
+import { convertHex, tagUser, isPrivateChannel } from "../../../utils";
 import type { ValidArgs } from "../../../classes/Arg";
 import type Client from "../../../classes/Client";
-import { Message, PrivateChannel, TextChannel } from "eris";
+import type { Message } from "eris";
 
 export default class Ping extends Command {
   description = "A ping command to get some basic information about the bot.";
@@ -28,7 +28,7 @@ export default class Ping extends Command {
       content: "Pinging server ...",
     });
 
-    pingmsg.edit({
+    return await pingmsg.edit({
       embed: {
         title: "Ping!",
         description: `Server responded in ${
@@ -40,11 +40,11 @@ export default class Ping extends Command {
             name: "API Latency",
             value: `${pingmsg.timestamp - msg.timestamp} ms`,
           },
-          msg.channel instanceof PrivateChannel
+          isPrivateChannel(msg.channel)
             ? null
             : {
                 name: "Latency",
-                value: `${(msg.channel as TextChannel).guild.shard.latency} ms`,
+                value: `${msg.channel.guild.shard.latency} ms`,
               },
         ].filter((el) => !!el),
         footer: {

@@ -1,6 +1,7 @@
 import type { Message } from "eris";
 import type { ValidArgs } from "./Arg";
 import type Client from "./Client";
+import type { InteractionFunction } from "./Interaction";
 
 export abstract class SubCommand {
   public abstract description: string;
@@ -19,6 +20,7 @@ export abstract class SubCommand {
   public clientperms: string[] = [];
   public reqperms: string[] = [];
   public allowdisable: boolean = false;
+  public interactions: Record<string, InteractionFunction> = {};
 
   constructor(
     protected bot: Client,

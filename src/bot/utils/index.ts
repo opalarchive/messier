@@ -10,6 +10,7 @@ export { default as updateEris } from "./updateEris";
 export { default as splitArgs } from "./splitArgs";
 export { default as properCase } from "./properCase";
 export { default as tagUser } from "./tagUser";
+export { default as isPrivateChannel } from "./isPrivateChannel";
 
 export function shortcuts() {
   if (!Array.prototype.last) {
