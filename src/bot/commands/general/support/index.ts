@@ -7,6 +7,7 @@ export default class Support extends Command {
   description = "Get an invite to my support server!";
   subcommands = [];
   allowdms = true;
+  cooldown = 3000;
 
   constructor(
     protected bot: Client,

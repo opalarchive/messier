@@ -76,7 +76,7 @@ export default function Home() {
         />
       </Head>
       <div className="my-16 mx-4 flex justify-center items-center flex-col">
-        <h1 className="text-7xl sm:text-9xl font-black tracking-wide my-3">
+        <h1 className="text-7xl font-sans sm:text-9xl font-black tracking-wide my-3">
           Messier
         </h1>
         <h2 className="text-4xl sm:text5xl font-bold text-gray-300 max-w-3xl my-3 text-center">

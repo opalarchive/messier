@@ -7,6 +7,7 @@ export default class Invite extends Command {
   description = "Get my invite link.";
   subcommands = [];
   allowdms = true;
+  cooldown = 3000;
 
   constructor(
     protected bot: Client,

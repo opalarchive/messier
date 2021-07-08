@@ -9,6 +9,7 @@ export default class Info extends Command {
   description = "Get some information about me!";
   subcommands = [];
   allowdms = true;
+  cooldown = 5000;
 
   constructor(
     protected bot: Client,

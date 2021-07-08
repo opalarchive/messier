@@ -31,44 +31,80 @@ const Command: FC<{
   args?: Argument[];
   cooldown?: number;
   description: string;
-}> = ({ name, args, cooldown, description }) => (
+  aliases: string[];
+}> = ({ name, args, cooldown, description, aliases }) => (
   <div>
     <Disclosure>
       {({ open }) => (
         <>
-          <Disclosure.Button className="flex w-full justify-between bg-blue-600 rounded px-4 py-2">
-            <p>
-              <span className="text-white text-lg font-bold tracking-wide">{`&${name}`}</span>
-              {!!args
-                ? args.map((el, idx) => (
-                    <span
-                      key={`arg-${idx}`}
-                      className="text-yellow-300 text-lg"
-                    >
-                      {!!el.optional ? ` [${el.name}]` : ` (${el.name})`}
-                    </span>
-                  ))
-                : null}
-            </p>
-            <span className="pt-1">
-              {open ? <RiArrowDownSLine /> : <RiArrowRightSLine />}
-            </span>
+          <Disclosure.Button className="w-full bg-blue-700 rounded-t rounded-b-none px-4 py-2">
+            <div className="flex w-full justify-between text-left">
+              <div className="w-11/12">
+                <div>
+                  <span className="text-white text-lg font-extrabold tracking-wide">
+                    {name}
+                  </span>
+                  {!!args
+                    ? args.map((el, idx) => (
+                        <span
+                          key={`arg-${idx}`}
+                          className="text-yellow-300 text-lg font-semibold"
+                        >
+                          {!!el.optional ? ` [${el.name}]` : ` (${el.name})`}
+                        </span>
+                      ))
+                    : null}
+                </div>
+                <div
+                  className={`text-white text-opacity-70 font-md leading-5 ${
+                    open ? "mb-2 mt-2" : "truncate"
+                  }`}
+                >
+                  Aliases: {aliases.join(", ")}
+                </div>
+                <div
+                  className={`${
+                    open ? "" : "truncate"
+                  } text-sm w-full text-left`}
+                >
+                  {description}
+                </div>
+              </div>
+              <span className="pt-6">
+                {open ? (
+                  <RiArrowDownSLine size={24} />
+                ) : (
+                  <RiArrowRightSLine size={24} />
+                )}
+              </span>
+            </div>
           </Disclosure.Button>
           <Transition
-            enter="transition duration-100 ease-out"
-            enterFrom="transform scale-95 opacity-0"
-            enterTo="transform scale-100 opacity-100"
-            leave="transition duration-75 ease-out"
-            leaveFrom="transform scale-100 opacity-100"
-            leaveTo="transform scale-95 opacity-0"
+            enter="transition duration-500 ease-out"
+            enterFrom="transform h-0 opacity-0"
+            enterTo="transform h-full opacity-100"
+            leave="transition duration-400 ease-out"
+            leaveFrom="transform h-full opacity-100"
+            leaveTo="transform h-0 opacity-0"
           >
             <Disclosure.Panel>
-              <div className="px-4 pt-2">
-                <p>{description}</p>
+              <div className="px-4 py-2 bg-indigo-900 bg-opacity-20	">
+                <div className="mt-2">
+                  <h2 className="text-white font-bold text-lg">Usage</h2>
+                  <span className="ml-1 text-gray-200">{`&${name} `}</span>
+                  {!!args
+                    ? args.map((el, idx) => (
+                        <span key={`arg-${idx}`} className="text-yellow-400">
+                          {!!el.optional ? ` [${el.name}]` : ` (${el.name})`}
+                        </span>
+                      ))
+                    : null}
+                </div>
                 {!!cooldown ? (
-                  <p className="text-gray-400">
-                    Cooldown: {cooldown / 1000} seconds
-                  </p>
+                  <div className="mt-4">
+                    <h2 className="text-white font-bold text-lg">Cooldown</h2>
+                    <div className="ml-1">{cooldown / 1000} seconds</div>
+                  </div>
                 ) : null}
               </div>
             </Disclosure.Panel>
@@ -108,11 +144,12 @@ const Commands: FC<{}> = () => {
   const [cmds, setCmds] = useState(allCommands);
 
   useEffect(() => {
-    setSelected(((router.query.category as string) || "").toLowerCase());
+    const newSelected = ((router.query.category as string) || "").toLowerCase();
+    setSelected(newSelected);
     setCmds(
-      !categories.some((el) => el.toLowerCase() === selected.toLowerCase())
+      !categories.some((el) => el.toLowerCase() === newSelected.toLowerCase())
         ? allCommands
-        : commands[selected.toLowerCase()]
+        : commands[newSelected.toLowerCase()]
     );
   }, [router.query]);
 
@@ -126,13 +163,15 @@ const Commands: FC<{}> = () => {
         />
       </Head>
       <div className="py-16 px-4 flex bg-blue-800 justify-center items-center flex-col">
-        <h1 className="text-6xl sm:text-6xl font-black my-2.5">Commands</h1>
+        <h1 className="text-6xl sm:text-6xl font-black my-2.5 font-sans">
+          Commands
+        </h1>
         <h2 className="text-4xl sm:text-4xl text-center my-2.5">
           List of Messier Commands
         </h2>
       </div>
       <div className="justify-center items-center flex flec-col">
-        <div className="p-5 grid gap-4 grid-cols-wait also 1 w-5/6 md:grid-cols-3 lg:grid-cols-4">
+        <div className="px-5 py-10 grid gap-12 grid-cols-wait also 1 w-5/6 md:grid-cols-3 lg:grid-cols-4">
           <div className="space-y-4 bg-gray-900 flex col-span-1 flex-col items-center p-4 rounded">
             <Category
               name="All"
@@ -150,10 +189,12 @@ const Commands: FC<{}> = () => {
               />
             ))}
           </div>
-          <div className="grid grid-cols-1 md:col-span-2 lg:col-span-3 gap-4">
-            {Object.keys(cmds).map((el) => (
-              <Command key={`command-${el}`} name={el} {...cmds[el]} />
-            ))}
+          <div className="grid grid-cols-1 md:col-span-2 lg:col-span-3 gap-5">
+            {Object.keys(cmds)
+              .sort()
+              .map((el) => (
+                <Command key={`command-${el}`} name={el} {...cmds[el]} />
+              ))}
           </div>
         </div>
       </div>
