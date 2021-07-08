@@ -1,13 +1,57 @@
 import Event from "../classes/Event";
-import {
-  APIMessageComponentInteraction,
-  InteractionType,
-} from "discord-api-types/payloads";
-import {
+import type { APIMessageComponentInteraction } from "discord-api-types/payloads";
+import type {
   GatewayDispatchEvents,
   GatewayInteractionCreateDispatchData,
-  GatewayOpcodes,
 } from "discord-api-types/gateway";
+
+enum GatewayOpcodes {
+  /**
+   * An event was dispatched
+   */
+  Dispatch,
+  /**
+   * A bidirectional opcode to maintain an active gateway connection.
+   * Fired periodically by the client, or fired by the gateway to request an immediate heartbeat from the client.
+   */
+  Heartbeat,
+  /**
+   * Starts a new session during the initial handshake
+   */
+  Identify,
+  /**
+   * Update the client's presence
+   */
+  PresenceUpdate,
+  /**
+   * Used to join/leave or move between voice channels
+   */
+  VoiceStateUpdate,
+  /**
+   * Resume a previous session that was disconnected
+   */
+  Resume = 6,
+  /**
+   * You should attempt to reconnect and resume immediately
+   */
+  Reconnect,
+  /**
+   * Request information about offline guild members in a large guild
+   */
+  RequestGuildMembers,
+  /**
+   * The session has been invalidated. You should reconnect and identify/resume accordingly
+   */
+  InvalidSession,
+  /**
+   * Sent immediately after connecting, contains the `heartbeat_interval` to use
+   */
+  Hello,
+  /**
+   * Sent in response to receiving a heartbeat to acknowledge that it has been received
+   */
+  HeartbeatAck,
+}
 
 export default class InteractionEvent extends Event {
   events = ["rawWS"];
@@ -21,7 +65,7 @@ export default class InteractionEvent extends Event {
         this.bot.log.info(`Interaction event: ${JSON.stringify(d, null, 2)}`);
         const data = d as GatewayInteractionCreateDispatchData;
 
-        if (data.type === InteractionType.MessageComponent) {
+        if (data.type === 3) {
           if (!data.data)
             return this.bot.log.error(
               `Data packet does not have data: ${JSON.stringify(d, null, 2)}`

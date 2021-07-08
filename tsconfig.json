@@ -41,7 +41,7 @@
       "./src/typings/*.d.ts"
     ],
     "forceConsistentCasingInFileNames": true,
-    "isolatedModules": false,
+    "isolatedModules": true,
     "jsx": "preserve"
   },
   "exclude": [
