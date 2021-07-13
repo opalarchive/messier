@@ -5,6 +5,7 @@ import { FC, useState, useEffect } from "react";
 import { Disclosure, Transition } from "@headlessui/react";
 import { RiArrowDownSLine, RiArrowRightSLine } from "react-icons/ri";
 import properCase from "../bot/utils/properCase";
+import clsx from "clsx";
 
 let commands = {};
 
@@ -56,16 +57,20 @@ const Command: FC<{
                     : null}
                 </div>
                 <div
-                  className={`text-white text-opacity-70 font-md leading-5 ${
-                    open ? "mb-2 mt-2" : "truncate"
-                  }`}
+                  className={clsx(
+                    "text-white text-opacity-70 font-md leading-5",
+                    {
+                      "mb-2 mt-2": open,
+                      truncate: !open,
+                    }
+                  )}
                 >
                   Aliases: {aliases.join(", ")}
                 </div>
                 <div
-                  className={`${
-                    open ? "" : "truncate"
-                  } text-sm w-full text-left`}
+                  className={clsx("text-sm w-full text-left", {
+                    truncate: !open,
+                  })}
                 >
                   {description}
                 </div>
@@ -127,9 +132,13 @@ const Category: FC<{ selected?: boolean; name: string }> = ({
     passHref
   >
     <a
-      className={`rounded-md w-full text-center text-xl cursor-pointer px-8 py-2 ${
-        selected ? "bg-blue-900" : "bg-blue-800"
-      }`}
+      className={clsx(
+        "rounded-md w-full text-center text-xl cursor-pointer px-8 py-2",
+        {
+          "bg-blue-900": selected,
+          "bg-blue-800": !selected,
+        }
+      )}
     >
       {name}
     </a>

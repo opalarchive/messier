@@ -2,6 +2,7 @@ import Head from "next/head";
 import type { FC } from "react";
 import Image from "next/image";
 import Link from "../components/Link";
+import clsx from "clsx";
 
 const ImageComponent: FC<{ imageSrc?: string; imageAlt?: string }> = ({
   imageSrc = "",
@@ -35,18 +36,19 @@ const Section: FC<{
   id,
 }) => (
   <div
-    className={`relative px-4 md:py-10 py-8 ${
-      showBorder ? "z-10" : `bg-${backgroundColor}`
-    }`}
+    className={clsx("relative px-4 md:py-10 py-8", {
+      "z-10": showBorder,
+      [`bg-${backgroundColor}`]: !showBorder,
+    })}
     id={id}
   >
     {showBorder && <div className={`zig-zag-border bg-${backgroundColor}`} />}
     <div className="grid grid-cols-4 gap-10 lg:grid-cols-8 z-10 col">
       {align === "left" && (
         <div
-          className={`col-span-4 h-auto w-full ${
-            align === "left" ? "hidden lg:block" : ""
-          }`}
+          className={clsx("col-span-4 h-auto w-full", {
+            "hidden lg:block": align === "left",
+          })}
         >
           <ImageComponent imageSrc={imageSrc} imageAlt={imageAlt} />
         </div>
@@ -55,9 +57,9 @@ const Section: FC<{
         <div className="lg:max-w-xl max-w-2xl">{children}</div>
       </div>
       <div
-        className={`col-span-4 h-auto w-full ${
-          align === "left" ? "block lg:hidden" : ""
-        }`}
+        className={clsx("col-span-4 h-auto w-full", {
+          "hidden lg:block": align === "left",
+        })}
       >
         <ImageComponent imageSrc={imageSrc} imageAlt={imageAlt} />
       </div>
