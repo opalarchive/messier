@@ -170,7 +170,7 @@ const Commands: FC<{}> = () => {
           List of Messier Commands
         </h2>
       </div>
-      <div className="justify-center items-start px-5 py-10 space-x-5 flex">
+      <div className="justify-center items-start px-5 py-10 space-x-5 sm:flex">
         <div className="space-y-4 bg-gray-900 flex col-span-1 flex-col items-center p-4 rounded grid">
           <Category
             name="All"
