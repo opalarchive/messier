@@ -179,32 +179,30 @@ const Commands: FC<{}> = () => {
           List of Messier Commands
         </h2>
       </div>
-      <div className="justify-center items-center flex flec-col">
-        <div className="px-5 py-10 grid gap-12 grid-cols-wait also 1 w-5/6 md:grid-cols-3 lg:grid-cols-4">
-          <div className="space-y-4 bg-gray-900 flex col-span-1 flex-col items-center p-4 rounded">
+      <div className="justify-center items-start px-5 py-10 space-x-5 sm:flex">
+        <div className="space-y-4 bg-gray-900 flex col-span-1 flex-col items-center p-4 rounded grid">
+          <Category
+            name="All"
+            selected={
+              !categories.some(
+                (el) => el.toLowerCase() === selected.toLowerCase()
+              )
+            }
+          />
+          {categories.map((el) => (
             <Category
-              name="All"
-              selected={
-                !categories.some(
-                  (el) => el.toLowerCase() === selected.toLowerCase()
-                )
-              }
+              name={el}
+              selected={el.toLowerCase() === selected.toLowerCase()}
+              key={`${el}-category`}
             />
-            {categories.map((el) => (
-              <Category
-                name={el}
-                selected={el.toLowerCase() === selected.toLowerCase()}
-                key={`${el}-category`}
-              />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 md:col-span-2 lg:col-span-3 gap-5">
+          {Object.keys(cmds)
+            .sort()
+            .map((el) => (
+              <Command key={`command-${el}`} name={el} {...cmds[el]} />
             ))}
-          </div>
-          <div className="grid grid-cols-1 md:col-span-2 lg:col-span-3 gap-5">
-            {Object.keys(cmds)
-              .sort()
-              .map((el) => (
-                <Command key={`command-${el}`} name={el} {...cmds[el]} />
-              ))}
-          </div>
         </div>
       </div>
     </>
