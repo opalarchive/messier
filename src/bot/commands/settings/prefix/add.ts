@@ -40,17 +40,19 @@ export default class AddPrefix extends SubCommand {
       );
 
       return await msg.channel.sendMessage({
-        embed: {
-          title: "My prefixes",
-          color: convertHex(colors.yellow["500"]),
-          description: `Here are my prefixes for this server:\n\n${prefixes
-            .map((prefix, idx) => `\`${idx + 1}.\` ${prefix}`)
-            .join("\n")}`,
-          footer: {
-            text: `Ran by ${tagUser(msg.author)}`,
-            icon_url: msg.author.dynamicAvatarURL(),
+        embeds: [
+          {
+            title: "My prefixes",
+            color: convertHex(colors.yellow["500"]),
+            description: `Here are my prefixes for this server:\n\n${prefixes
+              .map((prefix, idx) => `\`${idx + 1}.\` ${prefix}`)
+              .join("\n")}`,
+            footer: {
+              text: `Ran by ${tagUser(msg.author)}`,
+              icon_url: msg.author.dynamicAvatarURL(),
+            },
           },
-        },
+        ],
         content: `Prefix ${prefix} successfully added.`,
       });
     } catch (err) {

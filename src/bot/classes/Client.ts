@@ -126,7 +126,7 @@ export default class BotClient extends Client {
       cmd.aliases
         ?.map((el) => el.toLowerCase())
         .filter((el) => el !== cmd.name)
-        .forEach((alias: string) => this.commands.set(alias, cmd.name));
+        .forEach((alias: string) => map.set(alias, cmd.name));
 
       Object.keys(cmd.interactions).map((el) =>
         this.interactions.setComponentInteraction(el, cmd.interactions[el])

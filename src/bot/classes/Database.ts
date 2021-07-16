@@ -27,7 +27,7 @@ export async function getGuildConfig(
     return { id: guild };
   }
   await Promise.all(
-    ["disabledCategories", "disabledCmds", "prefixes"].map(
+    ["disabledCategories", "disabledCmds", "prefixes", "channelList"].map(
       (el) =>
         new Promise<void>(async (resolve) => {
           guildInfo[el] =
@@ -148,4 +148,23 @@ export async function setStaffRole(guild: string, role: string) {
   return await redis.hset(getGuildLocation(guild), {
     staffRole: role,
   });
+}
+
+export async function getChannelInformation(guild: string) {
+  let list: string[] = [],
+    disableDefault: boolean = false;
+  await Promise.all([
+    new Promise<void>(async (resolve) => {
+      disableDefault =
+        (await redis.hget(getGuildLocation(guild), "channelDefaultDisable")) ===
+        "true";
+      resolve();
+    }),
+    new Promise<void>(async (resolve) => {
+      list = await redis.smembers(`${getGuildLocation(guild)}.channelList`);
+      resolve();
+    }),
+  ]);
+
+  return { list, disableDefault };
 }

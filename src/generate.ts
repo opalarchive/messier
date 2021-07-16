@@ -1,9 +1,6 @@
-export {};
-
-const { readdir, writeFile } = require("fs/promises");
+import { readdir, writeFile } from "fs/promises";
 import Client from "./bot/classes/Client";
-const path = require("path");
-
+import path from "path";
 import type { Dirent } from "fs";
 
 let commands = {};

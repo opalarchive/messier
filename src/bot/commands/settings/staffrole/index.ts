@@ -6,7 +6,8 @@ import type { Message } from "eris";
 
 export default class Staff extends Command {
   description = "View the current staff role for the server.";
-  subcommands = ["set"];
+  subcommands = ["set", "reset"];
+  cooldown = 10000;
 
   constructor(
     protected bot: Client,

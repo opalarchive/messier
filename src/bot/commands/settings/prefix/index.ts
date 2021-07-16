@@ -11,6 +11,7 @@ export default class Prefix extends Command {
     "Get the bot's current prefix, set a new prefix, or remove a prefix.";
   subcommands = ["add", "remove", "reset"];
   allowdms = true;
+  cooldown = 5000;
 
   constructor(
     protected bot: Client,
@@ -31,19 +32,21 @@ export default class Prefix extends Command {
     }
 
     return await msg.channel.sendMessage({
-      embed: {
-        title: "My prefixes",
-        color: convertHex(colors.green["500"]),
-        description: `Here are my prefixes${
-          isPrivateChannel(msg.channel) ? "" : " for this server"
-        }:\n\n${prefixes
-          .map((prefix, idx) => `\`${idx + 1}.\` ${prefix}`)
-          .join("\n")}`,
-        footer: {
-          text: `Ran by ${tagUser(msg.author)}`,
-          icon_url: msg.author.dynamicAvatarURL(),
+      embeds: [
+        {
+          title: "My prefixes",
+          color: convertHex(colors.green["500"]),
+          description: `Here are my prefixes${
+            isPrivateChannel(msg.channel) ? "" : " for this server"
+          }:\n\n${prefixes
+            .map((prefix, idx) => `\`${idx + 1}.\` ${prefix}`)
+            .join("\n")}`,
+          footer: {
+            text: `Ran by ${tagUser(msg.author)}`,
+            icon_url: msg.author.dynamicAvatarURL(),
+          },
         },
-      },
+      ],
     });
   }
 }

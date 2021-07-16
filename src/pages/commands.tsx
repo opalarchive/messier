@@ -76,16 +76,18 @@ const Command: FC<{
                       ))
                     : null}
                 </div>
-                <div
-                  className={clsx(
-                    "text-white text-opacity-70 font-md leading-5 mb-1 mt-1",
-                    {
-                      truncate: !open,
-                    }
-                  )}
-                >
-                  Aliases: {aliases.join(", ")}
-                </div>
+                {aliases[0] && (
+                  <div
+                    className={clsx(
+                      "text-white text-opacity-70 font-md leading-5 mb-1 mt-1",
+                      {
+                        truncate: !open,
+                      }
+                    )}
+                  >
+                    Aliases: {aliases.join(", ")}
+                  </div>
+                )}
                 <div
                   className={clsx("text-sm w-full text-left", {
                     truncate: !open,
@@ -94,7 +96,12 @@ const Command: FC<{
                   {description}
                 </div>
               </div>
-              <span className="pt-6">
+              <span
+                className={clsx({
+                  "pt-6": !!aliases[0],
+                  "pt-3": !aliases[0],
+                })}
+              >
                 {open ? (
                   <RiArrowDownSLine size={24} />
                 ) : (
@@ -187,7 +194,7 @@ const categories = Object.keys(commands).map((el) => properCase(el));
 const Commands: FC<{}> = () => {
   const router = useRouter();
   const [selected, setSelected] = useState<string>("");
-  const [cmds, setCmds] = useState(allCommands);
+  const [cmds, setCmds] = useState({});
 
   const getNewCommands = (selected: string, command: string) => {
     if (selected === "command") {
@@ -197,10 +204,19 @@ const Commands: FC<{}> = () => {
       delete obj.subcommands;
 
       const commands = { [command]: obj };
-      Object.keys(subcommands).forEach(
-        (el) =>
-          (commands[`${command} ${el}`] = Object.assign(subcommands[el], obj))
-      );
+      Object.keys(subcommands).forEach((el) => {
+        const subcommand = subcommands[el];
+
+        ["cooldown", "staff", "description"].forEach((key) => {
+          if (!subcommand[key]) subcommand[key] = obj[key];
+        });
+
+        subcommand.aliases = subcommand.aliases.map(
+          (al: string) => `${command} ${al}`
+        );
+
+        commands[`${command} ${el}`] = subcommand;
+      });
       return commands;
     }
     if (categories.some((el) => el.toLowerCase() === selected.toLowerCase()))

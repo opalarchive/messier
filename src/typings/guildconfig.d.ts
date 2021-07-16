@@ -2,6 +2,8 @@ interface GuildConfig {
   betaGuild?: boolean;
   disabledCategories?: string[];
   disabledCmds?: string[];
+  channelList?: string[];
+  channelDefaultDisable?: boolean;
   id?: string;
   guildLocale?: string;
   prefixes?: string[];

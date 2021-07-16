@@ -11,6 +11,7 @@ export { default as splitArgs } from "./splitArgs";
 export { default as properCase } from "./properCase";
 export { default as tagUser } from "./tagUser";
 export { default as isPrivateChannel } from "./isPrivateChannel";
+export { default as reportError } from "./reportError";
 
 export function shortcuts() {
   if (!Array.prototype.last) {

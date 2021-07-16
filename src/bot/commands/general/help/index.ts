@@ -6,8 +6,7 @@ import type Client from "../../../classes/Client";
 import colors from "tailwindcss/colors";
 
 export default class Help extends Command {
-  description =
-    "The help command for the bot, but through a dm. Add a command, category, or subcommand after this to get specific information.";
+  public description: string;
   subcommands = ["dm"];
   allowdisable = false;
   allowdms = true;
@@ -30,6 +29,8 @@ export default class Help extends Command {
     super(bot, name, category);
     this.aliases = ["h", "listcmds", "listcommands", "commands"];
     this.dmUser = false;
+    this.description =
+      "The help command for the bot. Add a command, category, or subcommand after this to get specific information.";
   }
 
   getEmoji(category: string) {
@@ -75,26 +76,28 @@ export default class Help extends Command {
 
   async generalHelpCommand(msg: Message) {
     return await this.sendInfo(msg, {
-      embed: {
-        title: "Messier Help",
-        color: convertHex(colors[Object.keys(colors).random(1)[0]]["500"]),
-        description: `Here are the categories for Messier. To find information about a category, run \`${msg.prefix}help [category]\`.`,
-        fields: Array.from(this.bot.categories.keys()).map(
-          (category: string) => ({
-            name: `**${this.getEmoji(category)}  ${properCase(category)}**`,
-            value: `\`${
-              this.dmUser ? this.bot.config.prefixes[0] : msg.prefix
-            }help ${category}\`\n[Hover for Information](https://messier.dev/commands?category=${category} "${this.getDescription(
-              category
-            )} ${this.getLoadedCommands(category)}")`,
-            inline: false,
-          })
-        ),
-        footer: {
-          text: `Ran by ${tagUser(msg.author)}`,
-          icon_url: msg.author.dynamicAvatarURL(),
+      embeds: [
+        {
+          title: "Messier Help",
+          color: convertHex(colors[Object.keys(colors).random(1)[0]]["500"]),
+          description: `Here are the categories for Messier. To find information about a category, run \`${msg.prefix}help [category]\`.`,
+          fields: Array.from(this.bot.categories.keys()).map(
+            (category: string) => ({
+              name: `**${this.getEmoji(category)}  ${properCase(category)}**`,
+              value: `\`${
+                this.dmUser ? this.bot.config.prefixes[0] : msg.prefix
+              }help ${category}\`\n[Hover for Information](https://messier.dev/commands?category=${category} "${this.getDescription(
+                category
+              )} ${this.getLoadedCommands(category)}")`,
+              inline: false,
+            })
+          ),
+          footer: {
+            text: `Ran by ${tagUser(msg.author)}`,
+            icon_url: msg.author.dynamicAvatarURL(),
+          },
         },
-      },
+      ],
     });
   }
 
@@ -104,27 +107,29 @@ export default class Help extends Command {
       throw new Error("Invalid Category");
 
     return await this.sendInfo(msg, {
-      embed: {
-        title: `**${this.getEmoji(category)}  ${properCase(category)}**`,
-        color: convertHex(colors[Object.keys(colors).random(1)[0]]["500"]),
-        description: `[${this.getDescription(
-          category
-        )}](https://www.messier.dev/commands?category=${category})\n\nRun \`${
-          msg.prefix
-        }help [command]\` for more information on any particular command. `
-          .concat("\n\n")
-          .concat(
-            Array.from(commands)
-              .map((cmd) => `\`${cmd}\``)
-              .join(", ")
-          ),
-        footer: {
-          text: `Ran by ${tagUser(msg.author)} | ${this.getLoadedCommands(
+      embeds: [
+        {
+          title: `**${this.getEmoji(category)}  ${properCase(category)}**`,
+          color: convertHex(colors[Object.keys(colors).random(1)[0]]["500"]),
+          description: `[${this.getDescription(
             category
-          )}`,
-          icon_url: msg.author.dynamicAvatarURL(),
+          )}](https://www.messier.dev/commands?category=${category})\n\nRun \`${
+            msg.prefix
+          }help [command]\` for more information on any particular command. `
+            .concat("\n\n")
+            .concat(
+              Array.from(commands)
+                .map((cmd) => `\`${cmd}\``)
+                .join(", ")
+            ),
+          footer: {
+            text: `Ran by ${tagUser(msg.author)} | ${this.getLoadedCommands(
+              category
+            )}`,
+            icon_url: msg.author.dynamicAvatarURL(),
+          },
         },
-      },
+      ],
     });
   }
 
@@ -208,16 +213,18 @@ export default class Help extends Command {
     higherCommand?: string
   ) {
     return await this.sendInfo(msg, {
-      embed: {
-        title: `**${properCase(higherCommand || command.name)}**`,
-        description: command.description,
-        fields: this.getFields(command, msg, higherCommand),
-        color: convertHex(colors[Object.keys(colors).random(1)[0]]["500"]),
-        footer: {
-          text: `Ran by ${tagUser(msg.author)}`,
-          icon_url: msg.author.dynamicAvatarURL(),
+      embeds: [
+        {
+          title: `**${properCase(higherCommand || command.name)}**`,
+          description: command.description,
+          fields: this.getFields(command, msg, higherCommand),
+          color: convertHex(colors[Object.keys(colors).random(1)[0]]["500"]),
+          footer: {
+            text: `Ran by ${tagUser(msg.author)}`,
+            icon_url: msg.author.dynamicAvatarURL(),
+          },
         },
-      },
+      ],
     });
   }
 

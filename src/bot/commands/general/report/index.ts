@@ -49,25 +49,27 @@ export default class Report extends Command {
     );
 
     return await msg.channel.sendMessage({
-      embed: {
-        title: "Report added!",
-        description: `I added the report of\n\`\`\`${
-          report.length > 125
-            ? report.substring(0, 100).concat("...").concat(report.slice(-20))
-            : report
-        }\`\`\``,
-        fields: [
-          {
-            name: "UID",
-            value: `Use \`${msg.prefix}report view [uid]\` to view your report:\`\`\`${uid}\`\`\``,
+      embeds: [
+        {
+          title: "Report added!",
+          description: `I added the report of\n\`\`\`${
+            report.length > 125
+              ? report.substring(0, 100).concat("...").concat(report.slice(-20))
+              : report
+          }\`\`\``,
+          fields: [
+            {
+              name: "UID",
+              value: `Use \`${msg.prefix}report view [uid]\` to view your report:\`\`\`${uid}\`\`\``,
+            },
+          ],
+          color: convertHex(colors.sky["500"]),
+          footer: {
+            icon_url: msg.author.dynamicAvatarURL(),
+            text: `Reported by ${tagUser(msg.author)}`,
           },
-        ],
-        color: convertHex(colors.sky["500"]),
-        footer: {
-          icon_url: msg.author.dynamicAvatarURL(),
-          text: `Reported by ${tagUser(msg.author)}`,
         },
-      },
+      ],
     });
   }
 }

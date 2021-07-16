@@ -1,19 +1,10 @@
 import Event from "../classes/Event";
-import * as Sentry from "@sentry/node";
-import config from "../config";
 import * as colors from "tailwindcss/colors";
-import { convertHex, isPrivateChannel } from "../utils";
-import type { Command } from "../classes/Command";
+import { convertHex, isPrivateChannel, reportError } from "../utils";
+import type { Command, SubCommand } from "../classes/Command";
 import type { Message } from "eris";
 
 const inviteRegex = /(https?:\/\/)?discord.(gg)\/[a-z0-9]+/i;
-
-// Hides API keys and the bot token from output
-const tokens: string[] = [config.token, config.sentry.dsn];
-
-// Tokens to hide
-const tokenRegex = new RegExp(tokens.join("|"), "g");
-
 export class HandlerEvent extends Event {
   events = ["messageCreate"];
 
@@ -31,12 +22,14 @@ export class HandlerEvent extends Event {
     // DM Specific actions
     if (isPrivateChannel(msg.channel)) {
       if (inviteRegex.test(msg.content)) {
-        return msg.inlineReply({
-          embed: {
-            title: "Invite Me!",
-            description: `You can invite me by clicking [this link](https://discord.com/oauth2/authorize?&client_id=${this.bot.user.id}&scope=bot&permissions=2147806272) or going to [https://www.messier.dev/invite](https://www.messier.dev/invite).\n\n**Need Support?** Join the support server at [https://discord.gg/pxbxRDBQHp](https://discord.gg/pxbxRDBQHp) or [https://www.messier.dev/discord](https://www.messier.dev/discord).`,
-            color: convertHex(colors.green["500"]),
-          },
+        return await msg.inlineReply({
+          embeds: [
+            {
+              title: "Invite Me!",
+              description: `You can invite me by clicking [this link](https://discord.com/oauth2/authorize?&client_id=${this.bot.user.id}&scope=bot&permissions=2147806272) or going to [https://www.messier.dev/invite](https://www.messier.dev/invite).\n\n**Need Support?** Join the support server at [https://discord.gg/pxbxRDBQHp](https://discord.gg/pxbxRDBQHp) or [https://www.messier.dev/discord](https://www.messier.dev/discord).`,
+              color: convertHex(colors.green["500"]),
+            },
+          ],
         });
       }
     }
@@ -68,6 +61,30 @@ export class HandlerEvent extends Event {
 
     if (!prefix) return;
 
+    if (
+      guildconfig?.channelDefaultDisable &&
+      !guildconfig.channelList?.includes(msg.channel.id)
+    ) {
+      // Isn't staff
+      if (
+        !msg.member?.permissions?.has("administrator") &&
+        guildconfig?.staffRole &&
+        !msg.member?.roles.includes(guildconfig.staffRole)
+      )
+        return await msg.addReaction("⚠️");
+    } else if (
+      !guildconfig?.channelDefaultDisable &&
+      guildconfig?.channelList?.includes(msg.channel.id)
+    ) {
+      // Isn't staff
+      if (
+        !msg.member?.permissions?.has("administrator") &&
+        guildconfig?.staffRole &&
+        !msg.member?.roles.includes(guildconfig.staffRole)
+      )
+        return await msg.addReaction("⚠️");
+    }
+
     msg.prefix = prefix;
 
     // Finds the command to run
@@ -76,16 +93,31 @@ export class HandlerEvent extends Event {
       .slice(prefix.length)
       .split(/\s+/g);
     let command = this.bot.commands.get(commandName);
+    let subcommand: SubCommand | string | undefined;
 
-    while (typeof command === "string")
-      command = this.bot.commands.get(command);
+    try {
+      let recTotal = 0;
 
-    if (!command) return;
+      while (typeof command === "string") {
+        command = this.bot.commands.get(command);
+        recTotal++;
+        if (recTotal >= 100)
+          throw new Error("Maximum while loop size exceeded");
+      }
 
-    let subcommand = this.bot.subcommands.get(command.name)?.get(args[0]);
+      if (!command) return;
 
-    while (typeof subcommand === "string")
       subcommand = this.bot.subcommands.get(command.name)?.get(args[0]);
+
+      while (typeof subcommand === "string") {
+        subcommand = this.bot.subcommands.get(command.name)?.get(subcommand);
+        recTotal++;
+        if (recTotal >= 100)
+          throw new Error("Maximum while loop size exceeded");
+      }
+    } catch (err) {
+      return reportError(msg, this.bot, err as Error);
+    }
 
     if (subcommand) args.shift();
 
@@ -101,12 +133,14 @@ export class HandlerEvent extends Event {
       (!command.allowdms || (subcommand && !subcommand.allowdms)) &&
       isPrivateChannel(msg.channel)
     )
-      return msg.channel.sendMessage({
-        embed: {
-          title: "❌ That action can't be done!",
-          description: `You tried to run the command ${command.name}, which doesn't work in DMs. Try to run this in a server!`,
-          color: convertHex(colors.red["500"]),
-        },
+      return await msg.channel.sendMessage({
+        embeds: [
+          {
+            title: "❌ That action can't be done!",
+            description: `You tried to run the command ${command.name}, which doesn't work in DMs. Try to run this in a server!`,
+            color: convertHex(colors.red["500"]),
+          },
+        ],
       });
 
     // Handles guild options
@@ -114,12 +148,14 @@ export class HandlerEvent extends Event {
       if (command.allowdisable !== false) {
         // Disabled categories
         if (guildconfig?.disabledCategories?.includes(command.category))
-          return msg.channel.sendMessage({
-            embed: {
-              title: "❌ That action can't be done!",
-              description: `You tried to run the command ${command.name}, which is disabled in this guild (in fact, the entire category ${command.category} is disabled). Run this in another guild!`,
-              color: convertHex(colors.red["500"]),
-            },
+          return await msg.channel.sendMessage({
+            embeds: [
+              {
+                title: "❌ That action can't be done!",
+                description: `You tried to run the command ${command.name}, which is disabled in this guild (in fact, the entire category ${command.category} is disabled). Run this in another guild!`,
+                color: convertHex(colors.red["500"]),
+              },
+            ],
           });
 
         // Disabled commands
@@ -129,12 +165,14 @@ export class HandlerEvent extends Event {
             `${command.name}/${subcommand?.name}`
           )
         )
-          return msg.channel.sendMessage({
-            embed: {
-              title: "❌ That action can't be done!",
-              description: `You tried to run the command ${command.name}, which is disabled in this guild. Run this in another guild!`,
-              color: convertHex(colors.red["500"]),
-            },
+          return await msg.channel.sendMessage({
+            embeds: [
+              {
+                title: "❌ That action can't be done!",
+                description: `You tried to run the command ${command.name}, which is disabled in this guild. Run this in another guild!`,
+                color: convertHex(colors.red["500"]),
+              },
+            ],
           });
       }
 
@@ -145,16 +183,18 @@ export class HandlerEvent extends Event {
           guildconfig?.staffRole &&
           !msg.member?.roles.includes(guildconfig.staffRole)
         )
-          return msg.channel.sendMessage({
-            embed: {
-              title: "❌ That action can't be done!",
-              description: `You need the staff role ${
-                guildconfig.staffRole
-                  ? `(<@&${guildconfig.staffRole}>)`
-                  : "(which is not set up yet)"
-              } or administrator permissions to run a staff command!`,
-              color: convertHex(colors.red["500"]),
-            },
+          return await msg.channel.sendMessage({
+            embeds: [
+              {
+                title: "❌ That action can't be done!",
+                description: `You need the staff role ${
+                  guildconfig.staffRole
+                    ? `(<@&${guildconfig.staffRole}>)`
+                    : "(which is not set up yet)"
+                } or administrator permissions to run a staff command!`,
+                color: convertHex(colors.red["500"]),
+              },
+            ],
           });
       }
 
@@ -168,13 +208,15 @@ export class HandlerEvent extends Event {
         !msg.channel.permissionsOf(this.bot.user.id).has("sendMessages") ||
         !botPerms?.has("sendMessages")
       ) {
-        return dmChannel
+        return await dmChannel
           .sendMessage({
-            embed: {
-              title: "🔇 I can't speak!",
-              description: `You tried to run the command ${command.name}, but I can't talk in the channel <#${msg.channel.id}>. Try to resolve this issue and run the command again.`,
-              color: convertHex(colors.red["500"]),
-            },
+            embeds: [
+              {
+                title: "🔇 I can't speak!",
+                description: `You tried to run the command ${command.name}, but I can't talk in the channel <#${msg.channel.id}>. Try to resolve this issue and run the command again.`,
+                color: convertHex(colors.red["500"]),
+              },
+            ],
           })
           .catch(() => {});
       }
@@ -184,13 +226,15 @@ export class HandlerEvent extends Event {
         !msg.channel.permissionsOf(this.bot.user.id).has("embedLinks") ||
         !botPerms.has("embedLinks")
       ) {
-        return dmChannel
+        return await dmChannel
           .sendMessage({
-            embed: {
-              title: "🔇 I can't speak!",
-              description: `You tried to run the command ${command.name}, but I can't send embeds in the channel <#${msg.channel.id}>. Try to resolve this issue and run the command again.`,
-              color: convertHex(colors.red["500"]),
-            },
+            embeds: [
+              {
+                title: "🔇 I can't speak!",
+                description: `You tried to run the command ${command.name}, but I can't send embeds in the channel <#${msg.channel.id}>. Try to resolve this issue and run the command again.`,
+                color: convertHex(colors.red["500"]),
+              },
+            ],
           })
           .catch(() => {});
       }
@@ -205,16 +249,18 @@ export class HandlerEvent extends Event {
 
         // Sends any missingperms
         if (missingPerms.length)
-          return msg.inlineReply({
-            embed: {
-              title: "🔇 I'm missing the following permissions!",
-              description: `You tried to run the command ${
-                command.name
-              }, which requires the following permissions I don't have:\n${missingPerms
-                .map((mperm) => `\`${mperm}\``)
-                .join("\n")}`,
-              color: convertHex(colors.red["500"]),
-            },
+          return await msg.inlineReply({
+            embeds: [
+              {
+                title: "🔇 I'm missing the following permissions!",
+                description: `You tried to run the command ${
+                  command.name
+                }, which requires the following permissions I don't have:\n${missingPerms
+                  .map((mperm) => `\`${mperm}\``)
+                  .join("\n")}`,
+                color: convertHex(colors.red["500"]),
+              },
+            ],
           });
       }
 
@@ -232,16 +278,18 @@ export class HandlerEvent extends Event {
 
         // Sends any missingperms
         if (missingPerms.length)
-          return msg.inlineReply({
-            embed: {
-              title: "⛔ You're missing the following permissions!",
-              description: `You tried to run the command ${
-                command.name
-              }, which requires the following permissions you don't have:\n${missingPerms
-                .map((mperm) => `\`${mperm}\``)
-                .join("\n")}`,
-              color: convertHex(colors.red["500"]),
-            },
+          return await msg.inlineReply({
+            embeds: [
+              {
+                title: "⛔ You're missing the following permissions!",
+                description: `You tried to run the command ${
+                  command.name
+                }, which requires the following permissions you don't have:\n${missingPerms
+                  .map((mperm) => `\`${mperm}\``)
+                  .join("\n")}`,
+                color: convertHex(colors.red["500"]),
+              },
+            ],
           });
       }
     }
@@ -249,7 +297,7 @@ export class HandlerEvent extends Event {
     // Handles command cooldowns
     if (command.cooldown && !this.bot.config.owners.includes(msg.author.id)) {
       const cooldown = this.bot.cooldowns.get(command.name + msg.author.id);
-      if (cooldown) return msg.addReaction("⌛");
+      if (cooldown) return await msg.addReaction("⌛");
       this.bot.cooldowns.set(command.name + msg.author.id, new Date());
       setTimeout(() => {
         this.bot.cooldowns.delete((command as Command).name + msg.author.id);
@@ -267,24 +315,26 @@ export class HandlerEvent extends Event {
       });
 
       if (missingargs.length) {
-        return msg.inlineReply({
-          embed: {
-            title: "⛔ You're missing the following arguments!",
-            description: `You tried to run the command ${
-              command.name
-            }, which requires the following arguments you didn't provide:\n${missingargs
-              .map((a) => `\`${a.name.toUpperCase()}\``)
-              .join(` or `)}`,
-            fields: [
-              {
-                name: "Help",
-                value: `To find more information, run \`${msg.prefix}help ${
-                  command.name
-                }${subcommand ? ` ${subcommand.name}` : ""}\`.`,
-              },
-            ],
-            color: convertHex(colors.red["500"]),
-          },
+        return await msg.inlineReply({
+          embeds: [
+            {
+              title: "⛔ You're missing the following arguments!",
+              description: `You tried to run the command ${
+                command.name
+              }, which requires the following arguments you didn't provide:\n${missingargs
+                .map((a) => `\`${a.name.toUpperCase()}\``)
+                .join(` or `)}`,
+              fields: [
+                {
+                  name: "Help",
+                  value: `To find more information, run \`${msg.prefix}help ${
+                    command.name
+                  }${subcommand ? ` ${subcommand.name}` : ""}\`.`,
+                },
+              ],
+              color: convertHex(colors.red["500"]),
+            },
+          ],
         });
       }
     }
@@ -312,39 +362,7 @@ export class HandlerEvent extends Event {
       ? subcommand.run(msg, parsedArgs, args)
       : command.run(msg, parsedArgs, args);
     run.catch((err) => {
-      if (process.env.NODE_ENV === "production") {
-        // Captures exceptions with Sentry
-        Sentry.configureScope((scope) => {
-          scope.setUser({ id: msg.author.id, username: `<@${msg.author.id}>` });
-          scope.setExtra(
-            "guild",
-            isPrivateChannel(msg.channel) ? "DMs" : msg.channel.guild?.name
-          );
-          scope.setExtra(
-            "guildID",
-            isPrivateChannel(msg.channel)
-              ? msg.author.id
-              : msg.channel.guild?.name
-          );
-        });
-
-        // Logs the error
-        Sentry.captureException(err);
-      }
-      this.bot.log.error(err.stack);
-
-      msg.channel.sendMessage({
-        embed: {
-          title: "<:error:837489379345694750> I ran into an error!",
-          description: `I ran into the following error: \`\`\`\n${err.message
-            .replace(tokenRegex, "[token]")
-            .substring(
-              0,
-              1900
-            )}\n\`\`\`It's already been reported, and a developer will contact you soon.`,
-          color: convertHex(colors.red["500"]),
-        },
-      });
+      reportError(msg, this.bot, err);
     });
   }
 }
