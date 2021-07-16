@@ -5,11 +5,13 @@ import { FC, useState, useEffect } from "react";
 import { Disclosure, Transition } from "@headlessui/react";
 import { RiArrowDownSLine, RiArrowRightSLine } from "react-icons/ri";
 import properCase from "../bot/utils/properCase";
+import clsx from "clsx";
 
-let commands = {};
+let commands: Record<string, any> = {};
 
 try {
   commands = require("../../commands.json");
+  console.log(commands);
 } catch (e) {
   console.log("No commands found.");
 }
@@ -32,7 +34,8 @@ const Command: FC<{
   cooldown?: number;
   description: string;
   aliases: string[];
-}> = ({ name, args, cooldown, description, aliases }) => (
+  subcommands: Record<string, any>;
+}> = ({ name, args, cooldown, description, aliases, subcommands }) => (
   <div>
     <Disclosure>
       {({ open }) => (
@@ -56,16 +59,19 @@ const Command: FC<{
                     : null}
                 </div>
                 <div
-                  className={`text-white text-opacity-70 font-md leading-5 mb-1 mt-1 ${
-                    open ? "" : "truncate"
-                  }`}
+                  className={clsx(
+                    "text-white text-opacity-70 font-md leading-5 mb-1 mt-1",
+                    {
+                      truncate: !open,
+                    }
+                  )}
                 >
                   Aliases: {aliases.join(", ")}
                 </div>
                 <div
-                  className={`${
-                    open ? "" : "truncate"
-                  } text-sm w-full text-left`}
+                  className={clsx("text-sm w-full text-left", {
+                    truncate: !open,
+                  })}
                 >
                   {description}
                 </div>
@@ -106,6 +112,25 @@ const Command: FC<{
                     <div className="ml-1">{cooldown / 1000} seconds</div>
                   </div>
                 ) : null}
+
+                {!!Object.keys(subcommands)[0] ? (
+                  <div className="mt-4">
+                    <Link
+                      href={{ query: { command: name.toLowerCase() } }}
+                      shallow
+                      passHref
+                    >
+                      <a>
+                        <h2 className="text-white hover:underline font-bold text-lg">
+                          Subcommands
+                        </h2>
+                      </a>
+                    </Link>
+                    <div className="ml-1">
+                      {Object.keys(subcommands).join(", ")}
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </Disclosure.Panel>
           </Transition>
@@ -127,9 +152,12 @@ const Category: FC<{ selected?: boolean; name: string }> = ({
     passHref
   >
     <a
-      className={`rounded-md w-full text-center text-xl cursor-pointer px-8 sm:px-12 py-2 ${
-        selected ? "bg-blue-900" : "bg-blue-800"
-      }`}
+      className={clsx({
+        "rounded-md mx-2 my-2 sm:m-0 flex-grow sm:w-full text-center text-xl cursor-pointer px-8 sm:px-12 py-2":
+          true,
+        "bg-blue-900": selected,
+        "bg-blue-800": !selected,
+      })}
     >
       {name}
     </a>
@@ -144,7 +172,9 @@ const Commands: FC<{}> = () => {
   const [cmds, setCmds] = useState(allCommands);
 
   useEffect(() => {
-    const newSelected = ((router.query.category as string) || "").toLowerCase();
+    let newSelected = ((router.query.category as string) || "").toLowerCase();
+    if (router.query.command) {
+    }
     setSelected(newSelected);
     setCmds(
       !categories.some((el) => el.toLowerCase() === newSelected.toLowerCase())
@@ -171,7 +201,7 @@ const Commands: FC<{}> = () => {
         </h2>
       </div>
       <div className="justify-center items-start px-5 py-10 space-y-5 sm:space-y-0 sm:space-x-5 sm:flex sm:flex-none">
-        <div className="space-x-4 sm:space-x-0 space-y-4 bg-gray-900 p-4 rounded sm:grid flex-wrap">
+        <div className="flex sm:space-x-0 sm:space-y-4 bg-gray-900 p-2 sm:p-4 rounded sm:grid flex-wrap justify-between">
           <Category
             name="All"
             selected={
