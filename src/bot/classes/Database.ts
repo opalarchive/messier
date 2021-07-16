@@ -121,14 +121,31 @@ export async function addReport(user: string, message: string, guild?: string) {
 
   await redis.hset(supportLocation(uid), info);
   await redis.lpush(`messier:support:users.${user}`, uid);
+  await redis.lpush(`messier:support:queue.none`, uid);
 
   return uid;
 }
 
 export async function getReportForUser(user: string) {
-  return (await redis.lrange(`messier:support:users.${user}`, 0, -1)) || [];
+  return await redis.lrange(`messier:support:users.${user}`, 0, -1);
 }
 
 export async function getReport(uid: string) {
-  return await redis.hgetall(supportLocation(uid));
+  const report = await redis.hgetall(supportLocation(uid));
+  report.uid = uid;
+  return report;
+}
+
+export async function getReportQueue(pos: number) {
+  return await redis.lrange(`messier:support:queue.none`, pos, pos);
+}
+
+export async function getStaffRole(guild: string) {
+  return await redis.hget(getGuildLocation(guild), "staffRole");
+}
+
+export async function setStaffRole(guild: string, role: string) {
+  return await redis.hset(getGuildLocation(guild), {
+    staffRole: role,
+  });
 }

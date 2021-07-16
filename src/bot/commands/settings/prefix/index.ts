@@ -9,7 +9,7 @@ import type { Message } from "eris";
 export default class Prefix extends Command {
   description =
     "Get the bot's current prefix, set a new prefix, or remove a prefix.";
-  subcommands = ["add"];
+  subcommands = ["add", "remove", "reset"];
   allowdms = true;
 
   constructor(

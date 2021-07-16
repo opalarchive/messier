@@ -1,5 +1,5 @@
 export default function splitArgs(string: string): string[] {
-  const regex = /[^\s"]+|"([^"]*)"/gi;
+  const regex = /[^"\s]+|"(?:\\"|[^"])+"/gi;
   const arr: string[] = [];
 
   do {

@@ -7,7 +7,7 @@ import colors from "tailwindcss/colors";
 
 export default class Help extends Command {
   description =
-    "The help command for the bot. Add a command, category, or subcommand after this to get specific information.";
+    "The help command for the bot, but through a dm. Add a command, category, or subcommand after this to get specific information.";
   subcommands = ["dm"];
   allowdisable = false;
   allowdms = true;
@@ -224,14 +224,16 @@ export default class Help extends Command {
   async run(msg: Message, parsedArgs: Map<string, ValidArgs>, _args: string[]) {
     if (!parsedArgs.get("command")) return await this.generalHelpCommand(msg);
 
-    const firstArg = parsedArgs.get("command")?.split(" ")[0] || "";
+    const firstArg =
+      (parsedArgs.get("command") as string | undefined)?.split(" ")[0] || "";
 
     if (this.bot.categories.get(firstArg))
       return await this.categoryHelpCommand(msg, firstArg);
 
     let command;
     if ((command = this.bot.commands.get(firstArg))) {
-      const secondArg = parsedArgs.get("command")?.split(" ")[1] || "";
+      const secondArg =
+        (parsedArgs.get("command") as string | undefined)?.split(" ")[1] || "";
       while (typeof command === "string")
         command = this.bot.commands.get(command);
 

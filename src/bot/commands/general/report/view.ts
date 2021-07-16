@@ -234,7 +234,7 @@ export default class ViewReports extends SubCommand {
       url: msg.author.dynamicAvatarURL(),
     };
 
-    if (!(reportid = pargs.get("reportid"))) {
+    if (!(reportid = pargs.get("reportid") as string | undefined)) {
       const tickets = [...(await getReportForUser(msg.author.id))] || [];
       return await msg.channel.sendMessage(
         this.sendAllTickets(authorObject, msg.prefix || "", tickets, 1)
@@ -269,6 +269,12 @@ export default class ViewReports extends SubCommand {
             {
               name: "Time",
               value: `<t:${Math.floor(parseInt(report.timestamp) / 1000)}>`,
+              inline: true,
+            },
+            {
+              name: "Author",
+              value: `<@${report.userId}>`,
+              inline: true,
             },
             {
               name: "Status",
@@ -276,10 +282,6 @@ export default class ViewReports extends SubCommand {
             },
           ],
           color: convertHex(colors.rose["500"]),
-          footer: {
-            text: `Report by ${tagUser(msg.author)}`,
-            icon_url: msg.author.dynamicAvatarURL(),
-          },
         },
       ],
     });

@@ -6,12 +6,29 @@ import { Disclosure, Transition } from "@headlessui/react";
 import { RiArrowDownSLine, RiArrowRightSLine } from "react-icons/ri";
 import properCase from "../bot/utils/properCase";
 import clsx from "clsx";
+import type { ValidArgs } from "../bot/classes/Arg";
 
-let commands: Record<string, any> = {};
+type Arg = {
+  name: string;
+  optional?: boolean;
+  type?: ValidArgs;
+};
+
+type SubCommand = {
+  aliases?: string[];
+  cooldown?: number;
+  staff?: boolean;
+  args?: Arg[];
+  description: string;
+};
+
+type Command = SubCommand & { subcommands?: Record<string, SubCommand> };
+
+let commands: Record<string, Record<string, Command>> = {};
 
 try {
   commands = require("../../commands.json");
-  console.log(commands);
+  Object.freeze(commands);
 } catch (e) {
   console.log("No commands found.");
 }
@@ -19,9 +36,10 @@ try {
 const allCommands = {};
 Object.keys(commands).forEach((el) =>
   Object.keys(commands[el]).forEach(
-    (cmd) => (allCommands[cmd] = commands[el][cmd])
+    (cmd) => (allCommands[cmd] = { ...commands[el][cmd], category: el })
   )
 );
+Object.freeze(allCommands);
 
 type Argument = {
   name: string;
@@ -34,7 +52,7 @@ const Command: FC<{
   cooldown?: number;
   description: string;
   aliases: string[];
-  subcommands: Record<string, any>;
+  subcommands?: Record<string, SubCommand>;
 }> = ({ name, args, cooldown, description, aliases, subcommands }) => (
   <div>
     <Disclosure>
@@ -113,7 +131,7 @@ const Command: FC<{
                   </div>
                 ) : null}
 
-                {!!Object.keys(subcommands)[0] ? (
+                {!!subcommands && !!Object.keys(subcommands)[0] ? (
                   <div className="mt-4">
                     <Link
                       href={{ query: { command: name.toLowerCase() } }}
@@ -171,15 +189,31 @@ const Commands: FC<{}> = () => {
   const [selected, setSelected] = useState<string>("");
   const [cmds, setCmds] = useState(allCommands);
 
+  const getNewCommands = (selected: string, command: string) => {
+    if (selected === "command") {
+      const obj = Object.assign({}, allCommands[command]);
+      if (!obj) return allCommands;
+      const subcommands = obj.subcommands;
+      delete obj.subcommands;
+
+      const commands = { [command]: obj };
+      Object.keys(subcommands).forEach(
+        (el) =>
+          (commands[`${command} ${el}`] = Object.assign(subcommands[el], obj))
+      );
+      return commands;
+    }
+    if (categories.some((el) => el.toLowerCase() === selected.toLowerCase()))
+      return commands[selected.toLowerCase()];
+    return allCommands;
+  };
+
   useEffect(() => {
     let newSelected = ((router.query.category as string) || "").toLowerCase();
-    if (router.query.command) {
-    }
+    if (router.query.command as string) newSelected = "command";
     setSelected(newSelected);
     setCmds(
-      !categories.some((el) => el.toLowerCase() === newSelected.toLowerCase())
-        ? allCommands
-        : commands[newSelected.toLowerCase()]
+      getNewCommands(newSelected, (router.query.command as string) || "")
     );
   }, [router.query]);
 
@@ -200,14 +234,14 @@ const Commands: FC<{}> = () => {
           List of Messier Commands
         </h2>
       </div>
-      <div className="justify-center items-start px-5 py-10 space-y-5 sm:space-y-0 sm:space-x-5 sm:flex sm:flex-none">
+      <div className="justify-center items-start px-5 py-10 space-y-5 sm:space-y-0 sm:space-x-5 sm:flex sm:flex-none sm:w-11/12 lg:w-5/6 sm:m-auto">
         <div className="flex sm:space-x-0 sm:space-y-4 bg-gray-900 p-2 sm:p-4 rounded sm:grid flex-wrap justify-between">
           <Category
             name="All"
             selected={
               !categories.some(
                 (el) => el.toLowerCase() === selected.toLowerCase()
-              )
+              ) && selected !== "command"
             }
           />
           {categories.map((el) => (
@@ -218,7 +252,7 @@ const Commands: FC<{}> = () => {
             />
           ))}
         </div>
-        <div className="grid grid-cols-1 gap-5">
+        <div className="grid grid-cols-1 w-full gap-5">
           {Object.keys(cmds)
             .sort()
             .map((el) => (

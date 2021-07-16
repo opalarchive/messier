@@ -219,11 +219,16 @@ export class HandlerEvent extends Event {
       }
 
       // Handles commands with reqperms
-      if (command.reqperms?.length && !guildconfig?.staffRole) {
+      if (
+        (command.reqperms?.length || subcommand?.reqperms?.length) &&
+        !guildconfig?.staffRole
+      ) {
         const missingPerms: string[] = [];
-        command.reqperms.forEach((perm: any) => {
-          if (!msg.member?.permissions?.has(perm)) missingPerms.push(perm);
-        });
+        (command.reqperms || [])
+          .concat(subcommand?.reqperms || [])
+          .forEach((perm: any) => {
+            if (!msg.member?.permissions?.has(perm)) missingPerms.push(perm);
+          });
 
         // Sends any missingperms
         if (missingPerms.length)
@@ -300,14 +305,13 @@ export class HandlerEvent extends Event {
       date: msg.timestamp,
     });
 
-    try {
-      // Runs the command & emits typing if it isn't silent
-      if (command.silent !== true || subcommand?.silent !== true)
-        await msg.channel.sendTyping();
-      subcommand
-        ? await subcommand.run(msg, parsedArgs, args)
-        : await command.run(msg, parsedArgs, args);
-    } catch (err: unknown) {
+    // Runs the command & emits typing if it isn't silent
+    if (command.silent !== true || subcommand?.silent !== true)
+      await msg.channel.sendTyping();
+    let run = subcommand
+      ? subcommand.run(msg, parsedArgs, args)
+      : command.run(msg, parsedArgs, args);
+    run.catch((err) => {
       if (process.env.NODE_ENV === "production") {
         // Captures exceptions with Sentry
         Sentry.configureScope((scope) => {
@@ -327,21 +331,20 @@ export class HandlerEvent extends Event {
         // Logs the error
         Sentry.captureException(err);
       }
-      this.bot.log.error(err);
+      this.bot.log.error(err.stack);
 
       msg.channel.sendMessage({
         embed: {
           title: "<:error:837489379345694750> I ran into an error!",
-          description: `I ran into the following error: \`\`\`\n${(
-            err as Error
-          ).message
+          description: `I ran into the following error: \`\`\`\n${err.message
             .replace(tokenRegex, "[token]")
             .substring(
+              0,
               1900
             )}\n\`\`\`It's already been reported, and a developer will contact you soon.`,
           color: convertHex(colors.red["500"]),
         },
       });
-    }
+    });
   }
 }

@@ -15,7 +15,7 @@ export default class Support extends Command {
     public category: string
   ) {
     super(bot, name, category);
-    this.aliases = ["join"];
+    this.aliases = ["server"];
   }
 
   async run(msg: Message, _pargs: Map<string, ValidArgs>, _args: string[]) {

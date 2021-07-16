@@ -7,8 +7,7 @@ import type Client from "../../../classes/Client";
 import type { Message, TextChannel } from "eris";
 
 export default class AddPrefix extends SubCommand {
-  description =
-    "Get the bot's current prefix, set a new prefix, or remove a prefix.";
+  description = "Add a prefix that the bot will listen to for this server.";
   allowdms = false;
   args = [
     {
@@ -35,7 +34,7 @@ export default class AddPrefix extends SubCommand {
     _args: string[]
   ) {
     try {
-      const prefix = pargs.get("prefix") || "";
+      const prefix = (pargs.get("prefix") || "") as string;
       let prefixes = [`<@${this.bot.user.id}> `].concat(
         await addPrefix(msg.guild.id, prefix)
       );

@@ -1,20 +1,89 @@
-import { splitArgs } from "../utils";
-import type { Message } from "eris";
+import { splitArgs, isPrivateChannel } from "../utils";
+import type { Collection, Message, Role } from "eris";
 import type Client from "./Client";
 
 export type ArgTypes = {
   string: (a: string) => string | undefined;
+  role: (a: string) => Role | undefined;
 };
 
-export type ValidArgs = string;
+export type ValidArgs = string | Role;
 
 export default class Args {
-  public argtypes: ArgTypes;
+  constructor(protected bot: Client) {}
 
-  constructor(protected bot: Client) {
-    this.argtypes = {
-      string: (a) => a,
-    };
+  private findRole(roles: Collection<Role>, args: string[]) {
+    let validRoles = roles.filter((el) => !!el),
+      name = "",
+      arr,
+      newName = "";
+
+    for (let i = 0; i < args.length; i++) {
+      newName = name.concat(args[i]).toLowerCase();
+      arr = validRoles.filter((el) =>
+        el.name.toLowerCase().startsWith(newName)
+      );
+
+      if (arr.length === 0)
+        return name
+          ? { roles: validRoles, pos: i }
+          : {
+              roles: undefined,
+              pos: i,
+            };
+      if (arr.length === 1) return { roles: arr, pos: i };
+
+      validRoles = arr;
+    }
+
+    return name
+      ? {
+          roles: validRoles,
+          pos: args.length,
+        }
+      : {
+          roles: undefined,
+          pos: 0,
+        };
+  }
+
+  private async getValue(
+    type: string,
+    { absorb }: { absorb?: boolean },
+    args: string[],
+    msg: Message
+  ) {
+    switch (type) {
+      case "string":
+        if (absorb)
+          return {
+            val: args.join(" "),
+            pos: args.length,
+          };
+        return { val: args[0], pos: 0 };
+      case "role":
+        if (isPrivateChannel(msg.channel)) return { roles: undefined, pos: 0 };
+        const roles = msg.guild.roles;
+        let role;
+
+        console.log(args[0]);
+
+        if (
+          (role = roles.find((el) =>
+            [el.id, `<@&${el.id}>`].some((val) => val === args[0])
+          ))
+        )
+          return { val: role, pos: 0 };
+
+        const { roles: validRoles, pos } = this.findRole(roles, args);
+
+        return {
+          val: validRoles?.length === 1 ? validRoles[0] : validRoles,
+          pos,
+        };
+    }
+
+    return { val: undefined, pos: 0 };
   }
 
   async parse(
@@ -26,39 +95,21 @@ export default class Args {
     }[],
     args: string,
     msg: Message
-  ): Promise<Map<string, ValidArgs>> {
-    const argsArr = splitArgs(args);
-    const map: Map<string, ValidArgs> = new Map();
+  ): Promise<Map<string, ValidArgs | undefined>> {
+    let argsArr = splitArgs(args);
+    const map: Map<string, ValidArgs | undefined> = new Map();
 
-    let idx = 0;
-
-    argsArr.forEach((arg: string) => {
-      const argument = cmdArgs[idx];
-
-      // Handles argument flags
-      if (!arg) return;
-
-      idx++;
-
-      if (!argument) {
-        if (cmdArgs.last()?.absorb && cmdArgs.last()?.type === "string") {
-          const name = cmdArgs.last()?.name;
-          if (!name) return;
-          map.set(name, map.get(name)?.concat(" ").concat(arg) || arg);
-        }
-        return;
-      }
-
-      // Gets the argtype
-      const value = this.argtypes[argument.type](
-        arg.toLowerCase(),
-        msg,
-        this.bot
+    for (const el of cmdArgs) {
+      const val = await this.getValue(
+        el.type,
+        { absorb: el.absorb },
+        argsArr,
+        msg
       );
-      if (typeof value == "undefined") return;
+      argsArr = argsArr.splice(0, val.pos);
+      map.set(el.name, val.val as any);
+    }
 
-      map.set(argument.name, value);
-    });
     return map;
   }
 

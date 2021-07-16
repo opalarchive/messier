@@ -1,0 +1,7 @@
+{
+    "ignore": [".git", "node_modules/", "dist/"],
+    "watch": ["src/server"],
+    "exec": "cross-env NODE_ENV=development ts-node --files ./src/server/index.ts",
+    "ext": "ts"
+  }
+  

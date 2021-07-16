@@ -12,10 +12,7 @@
     "importsNotUsedAsValues": "error",
     "incremental": true,
     "inlineSources": true,
-    "lib": [
-      "es2020",
-      "dom"
-    ],
+    "lib": ["es2020", "dom"],
     "module": "commonjs",
     "moduleResolution": "node",
     "noEmit": false,
@@ -37,17 +34,11 @@
     "strictNullChecks": true,
     "suppressImplicitAnyIndexErrors": true,
     "target": "es2020",
-    "typeRoots": [
-      "./src/typings/*.d.ts"
-    ],
+    "typeRoots": ["./src/typings/*.d.ts"],
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
     "jsx": "preserve"
   },
-  "exclude": [
-    "node_modules"
-  ],
-  "include": [
-    "src/**/*", "next-env.d.ts"
-  ]
+  "exclude": ["node_modules"],
+  "include": ["src/**/*", "next-env.d.ts", "tailwind.config.js"]
 }
