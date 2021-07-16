@@ -58,9 +58,8 @@ const Command: FC<{
                 </div>
                 <div
                   className={clsx(
-                    "text-white text-opacity-70 font-md leading-5",
+                    "text-white text-opacity-70 font-md leading-5 mb-1 mt-1",
                     {
-                      "mb-2 mt-2": open,
                       truncate: !open,
                     }
                   )}
@@ -133,7 +132,7 @@ const Category: FC<{ selected?: boolean; name: string }> = ({
   >
     <a
       className={clsx(
-        "rounded-md w-full text-center text-xl cursor-pointer px-8 py-2",
+        "rounded-md w-full text-center text-xl cursor-pointer px-8 sm:px-12 py-2",
         {
           "bg-blue-900": selected,
           "bg-blue-800": !selected,
@@ -179,8 +178,8 @@ const Commands: FC<{}> = () => {
           List of Messier Commands
         </h2>
       </div>
-      <div className="justify-center items-start px-5 py-10 space-x-5 sm:flex">
-        <div className="space-y-4 bg-gray-900 flex col-span-1 flex-col items-center p-4 rounded grid">
+      <div className="justify-center items-start px-5 py-10 space-y-5 sm:space-y-0 sm:space-x-5 sm:flex sm:flex-none">
+        <div className="space-x-4 sm:space-x-0 space-y-4 bg-gray-900 p-4 rounded sm:grid flex-wrap">
           <Category
             name="All"
             selected={
@@ -197,7 +196,7 @@ const Commands: FC<{}> = () => {
             />
           ))}
         </div>
-        <div className="grid grid-cols-1 md:col-span-2 lg:col-span-3 gap-5">
+        <div className="grid grid-cols-1 gap-5">
           {Object.keys(cmds)
             .sort()
             .map((el) => (

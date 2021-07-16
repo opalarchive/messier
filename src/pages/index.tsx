@@ -58,7 +58,7 @@ const Section: FC<{
       </div>
       <div
         className={clsx("col-span-4 h-auto w-full", {
-          "hidden lg:block": align === "left",
+          "block lg:hidden": align === "left",
         })}
       >
         <ImageComponent imageSrc={imageSrc} imageAlt={imageAlt} />
