@@ -39,10 +39,10 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "paths": {
+      "@classes": ["bot/classes"],
+      "@utils": ["bot/utils"],
       "@classes/*": ["bot/classes/*"],
-      "@classes": ["bot/classes/index"],
       "@utils/*": ["bot/utils/*"],
-      "@utils": ["bot/utils/index"],
       "@commands/*": ["bot/commands/*"],
       "@events/*": ["bot/events/*"]
     }

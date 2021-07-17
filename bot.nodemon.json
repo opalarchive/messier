@@ -1,6 +1,7 @@
 {
   "ignore": [".git", "node_modules/", "dist/"],
   "watch": ["src/bot"],
-  "exec": "cross-env NODE_ENV=development ts-node --files ./src/bot/index.ts",
-  "ext": "ts"
+  "exec": "cross-env NODE_ENV=development ts-node -r tsconfig-paths/register --files ./src/bot/index.ts",
+  "ext": "ts",
+  "restart": "rs-bot"
 }

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { FC, useState, useEffect } from "react";
 import { Disclosure, Transition } from "@headlessui/react";
 import { RiArrowDownSLine, RiArrowRightSLine } from "react-icons/ri";
-import properCase from "../bot/utils/properCase";
+import properCase from "@utils/properCase";
 import clsx from "clsx";
 import type { ValidArgs } from "../bot/classes/Arg";
 
