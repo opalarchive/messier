@@ -168,3 +168,20 @@ export async function getChannelInformation(guild: string) {
 
   return { list, disableDefault };
 }
+
+export async function setChannel(
+  guild: string,
+  channel: string,
+  enable: boolean
+) {
+  const disableDefault =
+    (await redis.hget(getGuildLocation(guild), "channelDefaultDisable")) ===
+    "true";
+  if (disableDefault === enable)
+    return await redis.sadd(`${getGuildLocation(guild)}.channelList`, channel);
+  return await redis.srem(`${getGuildLocation(guild)}.channelList`, channel);
+}
+
+export async function clearChannel(guild: string) {
+  return await redis.del(`${getGuildLocation(guild)}.channelList`);
+}

@@ -1,9 +1,6 @@
-import { SubCommand } from "../../../classes/Command";
+import { SubCommand, ValidArgs, Database, Client } from "@classes";
 import colors from "tailwindcss/colors";
-import { convertHex, tagUser } from "../../../utils";
-import { addPrefix } from "../../../classes/Database";
-import type { ValidArgs } from "../../../classes/Arg";
-import type Client from "../../../classes/Client";
+import { convertHex, tagUser } from "@utils";
 import type { Message, TextChannel } from "eris";
 
 export default class AddPrefix extends SubCommand {
@@ -36,7 +33,7 @@ export default class AddPrefix extends SubCommand {
     try {
       const prefix = (pargs.get("prefix") || "") as string;
       let prefixes = [`<@${this.bot.user.id}> `].concat(
-        await addPrefix(msg.guild.id, prefix)
+        await Database.addPrefix(msg.guild.id, prefix)
       );
 
       return await msg.channel.sendMessage({

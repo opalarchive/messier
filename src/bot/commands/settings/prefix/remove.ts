@@ -1,9 +1,6 @@
-import { SubCommand } from "../../../classes/Command";
+import { SubCommand, Database, ValidArgs, Client } from "@classes";
 import colors from "tailwindcss/colors";
 import { convertHex, tagUser } from "../../../utils";
-import { removePrefix } from "../../../classes/Database";
-import type { ValidArgs } from "../../../classes/Arg";
-import type Client from "../../../classes/Client";
 import type { Message, TextChannel } from "eris";
 
 export default class RemovePrefix extends SubCommand {
@@ -36,7 +33,7 @@ export default class RemovePrefix extends SubCommand {
     let prefix = (pargs.get("prefix") || "") as string;
     try {
       const prefixes = [`<@${this.bot.user.id}> `].concat(
-        await removePrefix(msg.channel.guild.id, prefix)
+        await Database.removePrefix(msg.channel.guild.id, prefix)
       );
 
       return await msg.channel.sendMessage({

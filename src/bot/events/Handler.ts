@@ -1,7 +1,6 @@
-import Event from "../classes/Event";
-import * as colors from "tailwindcss/colors";
-import { convertHex, isPrivateChannel, reportError } from "../utils";
-import type { Command, SubCommand } from "../classes/Command";
+import colors from "tailwindcss/colors";
+import { convertHex, isPrivateChannel, reportError } from "@utils";
+import { Command, SubCommand, Event } from "@classes";
 import type { Message } from "eris";
 
 const inviteRegex = /(https?:\/\/)?discord.(gg)\/[a-z0-9]+/i;
@@ -68,8 +67,8 @@ export class HandlerEvent extends Event {
       // Isn't staff
       if (
         !msg.member?.permissions?.has("administrator") &&
-        guildconfig?.staffRole &&
-        !msg.member?.roles.includes(guildconfig.staffRole)
+        (!guildconfig?.staffRole ||
+          !msg.member?.roles.includes(guildconfig.staffRole || ""))
       )
         return await msg.addReaction("⚠️");
     } else if (
@@ -79,8 +78,8 @@ export class HandlerEvent extends Event {
       // Isn't staff
       if (
         !msg.member?.permissions?.has("administrator") &&
-        guildconfig?.staffRole &&
-        !msg.member?.roles.includes(guildconfig.staffRole)
+        (!guildconfig?.staffRole ||
+          !msg.member?.roles.includes(guildconfig.staffRole || ""))
       )
         return await msg.addReaction("⚠️");
     }
@@ -180,15 +179,15 @@ export class HandlerEvent extends Event {
       if (command.staff || subcommand?.staff) {
         if (
           !msg.member?.permissions?.has("administrator") &&
-          guildconfig?.staffRole &&
-          !msg.member?.roles.includes(guildconfig.staffRole)
+          (!guildconfig?.staffRole ||
+            !msg.member?.roles.includes(guildconfig.staffRole || ""))
         )
           return await msg.channel.sendMessage({
             embeds: [
               {
                 title: "❌ That action can't be done!",
                 description: `You need the staff role ${
-                  guildconfig.staffRole
+                  guildconfig?.staffRole
                     ? `(<@&${guildconfig.staffRole}>)`
                     : "(which is not set up yet)"
                 } or administrator permissions to run a staff command!`,
@@ -265,10 +264,7 @@ export class HandlerEvent extends Event {
       }
 
       // Handles commands with reqperms
-      if (
-        (command.reqperms?.length || subcommand?.reqperms?.length) &&
-        !guildconfig?.staffRole
-      ) {
+      if (command.reqperms?.length || subcommand?.reqperms?.length) {
         const missingPerms: string[] = [];
         (command.reqperms || [])
           .concat(subcommand?.reqperms || [])
@@ -323,7 +319,9 @@ export class HandlerEvent extends Event {
                 command.name
               }, which requires the following arguments you didn't provide:\n${missingargs
                 .map((a) => `\`${a.name.toUpperCase()}\``)
-                .join(` or `)}`,
+                .join(
+                  ` or `
+                )}\n\nNote it is possible that multiple criteria match your selection. It's highly suggested to use ID's - follow the instructions [https://www.howtogeek.com/714348/how-to-enable-or-disable-developer-mode-on-discord/](here) and then copy the ID for the role, channel, or member.`,
               fields: [
                 {
                   name: "Help",

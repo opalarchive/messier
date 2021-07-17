@@ -1,48 +1,51 @@
 import { splitArgs, isPrivateChannel } from "../utils";
-import type { Collection, Message, Role } from "eris";
+import type { Channel, Collection, Message, Role } from "eris";
 import type Client from "./Client";
 
 export type ArgTypes = {
   string: (a: string) => string | undefined;
   role: (a: string) => Role | undefined;
+  channel: (a: string) => Channel | undefined;
 };
 
-export type ValidArgs = string | Role;
-
+export type ValidArgs = string | Role | Channel;
 export default class Args {
   constructor(protected bot: Client) {}
 
-  private findRole(roles: Collection<Role>, args: string[]) {
-    let validRoles = roles.filter((el) => !!el),
+  private findObject(
+    vals: Collection<{ name: string; id: string | number }>,
+    args: string[]
+  ) {
+    let validValues = vals.filter((el) => !!el),
       name = "",
       arr,
       newName = "";
 
     for (let i = 0; i < args.length; i++) {
       newName = name.concat(args[i]).toLowerCase();
-      arr = validRoles.filter((el) =>
+      arr = validValues.filter((el) =>
         el.name.toLowerCase().startsWith(newName)
       );
 
       if (arr.length === 0)
         return name
-          ? { roles: validRoles, pos: i }
+          ? { vals: validValues, pos: i }
           : {
-              roles: undefined,
+              vals: undefined,
               pos: i,
             };
-      if (arr.length === 1) return { roles: arr, pos: i };
+      if (arr.length === 1) return { vals: arr, pos: i };
 
-      validRoles = arr;
+      validValues = arr;
     }
 
     return name
       ? {
-          roles: validRoles,
+          vals: validValues,
           pos: args.length,
         }
       : {
-          roles: undefined,
+          vals: undefined,
           pos: 0,
         };
   }
@@ -53,34 +56,49 @@ export default class Args {
     args: string[],
     msg: Message
   ) {
-    switch (type) {
-      case "string":
-        if (absorb)
-          return {
-            val: args.join(" "),
-            pos: args.length,
-          };
-        return { val: args[0], pos: 0 };
-      case "role":
-        if (isPrivateChannel(msg.channel)) return { roles: undefined, pos: 0 };
-        const roles = msg.guild.roles;
-        let role;
-
-        console.log(args[0]);
-
-        if (
-          (role = roles.find((el) =>
-            [el.id, `<@&${el.id}>`].some((val) => val === args[0])
-          ))
-        )
-          return { val: role, pos: 0 };
-
-        const { roles: validRoles, pos } = this.findRole(roles, args);
-
+    if (type === "string") {
+      if (absorb)
         return {
-          val: validRoles?.length === 1 ? validRoles[0] : validRoles,
-          pos,
+          val: args.join(" "),
+          pos: args.length,
         };
+      return { val: args[0], pos: 0 };
+    } else if (type === "role") {
+      if (isPrivateChannel(msg.channel)) return { roles: undefined, pos: 0 };
+      const roles = msg.guild.roles;
+      let role;
+
+      if (
+        (role = roles.find((el) =>
+          [el.id, `<@&${el.id}>`].some((val) => val === args[0])
+        ))
+      )
+        return { val: role, pos: 0 };
+
+      const { vals: validValues, pos } = this.findObject(roles, args);
+
+      return {
+        val: validValues?.length === 1 ? validValues[0] : validValues,
+        pos,
+      };
+    } else if (type === "channel") {
+      if (isPrivateChannel(msg.channel)) return { channel: undefined, pos: 0 };
+      const channels = msg.guild.channels;
+      let channel;
+
+      if (
+        (channel = channels.find((el) =>
+          [el.id, `<#${el.id}>`].some((val) => val === args[0])
+        ))
+      )
+        return { val: channel, pos: 0 };
+
+      const { vals: validValues, pos } = this.findObject(channels, args);
+
+      return {
+        val: validValues?.length === 1 ? validValues[0] : validValues,
+        pos,
+      };
     }
 
     return { val: undefined, pos: 0 };
@@ -117,6 +135,8 @@ export default class Args {
     switch (type) {
       case "string":
         return "characters separated by whitespace (allowing for quotations).";
+      case "role":
+        return "a discord role, which can be by ID or mention (preferred) or string.";
       default:
         return "unknown type.";
     }

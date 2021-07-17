@@ -1,7 +1,4 @@
-import { Command } from "../../../classes/Command";
-import { getStaffRole } from "../../../classes/Database";
-import type { ValidArgs } from "../../../classes/Arg";
-import type Client from "../../../classes/Client";
+import { Command, ValidArgs, Client, Database } from "@classes";
 import type { Message } from "eris";
 
 export default class Staff extends Command {
@@ -19,7 +16,7 @@ export default class Staff extends Command {
   }
 
   async run(msg: Message, _pargs: Map<string, ValidArgs>, _args: string[]) {
-    const role = await getStaffRole(msg.guild.id);
+    const role = await Database.getStaffRole(msg.guild.id);
 
     if (!role)
       return await msg.channel.sendMessage(

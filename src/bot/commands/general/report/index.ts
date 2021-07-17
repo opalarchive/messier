@@ -1,9 +1,6 @@
-import { Command } from "../../../classes/Command";
+import { Command, ValidArgs, Client, Database } from "@classes";
 import colors from "tailwindcss/colors";
-import { convertHex, tagUser, isPrivateChannel } from "../../../utils";
-import { addReport } from "../../../classes/Database";
-import type { ValidArgs } from "../../../classes/Arg";
-import type Client from "../../../classes/Client";
+import { convertHex, tagUser, isPrivateChannel } from "@utils";
 import type { Message } from "eris";
 
 export default class Report extends Command {
@@ -42,7 +39,7 @@ export default class Report extends Command {
 
     const report = this.extractContent(msg);
 
-    const uid = await addReport(
+    const uid = await Database.addReport(
       msg.author.id,
       report,
       isPrivateChannel(msg.channel) ? undefined : msg.channel.guild.id

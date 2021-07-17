@@ -1,9 +1,6 @@
-import { Command } from "../../../classes/Command";
+import { Command, Database, ValidArgs, Client } from "@classes";
 import colors from "tailwindcss/colors";
 import { convertHex, tagUser, isPrivateChannel } from "../../../utils";
-import { getPrefixes } from "../../../classes/Database";
-import type { ValidArgs } from "../../../classes/Arg";
-import type Client from "../../../classes/Client";
 import type { Message } from "eris";
 
 export default class Prefix extends Command {
@@ -27,7 +24,7 @@ export default class Prefix extends Command {
 
     if (!isPrivateChannel(msg.channel)) {
       prefixes = [`<@${this.bot.user.id}> `].concat(
-        await getPrefixes(msg.channel.guild.id)
+        await Database.getPrefixes(msg.channel.guild.id)
       );
     }
 

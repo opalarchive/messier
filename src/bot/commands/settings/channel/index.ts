@@ -1,16 +1,13 @@
-import { Command } from "../../../classes/Command";
+import { Command, Database, ValidArgs, Client } from "@classes";
 import colors from "tailwindcss/colors";
-import { convertHex } from "../../../utils";
-import { getChannelInformation } from "../../../classes/Database";
-import type { ValidArgs } from "../../../classes/Arg";
-import type Client from "../../../classes/Client";
+import { convertHex } from "@utils";
 import type { Message } from "eris";
 
 export default class Channel extends Command {
   description = "View the channel settings for this server.";
   subcommands = ["enable", "disable", "default"];
   allowdms = false;
-  cooldown = 5000;
+  cooldown = 10000;
 
   constructor(
     protected bot: Client,
@@ -26,7 +23,6 @@ export default class Channel extends Command {
     page: number = 0
   ) {
     const { disableDefault, list } = info;
-    console.log(list);
     return {
       embeds: [
         {
@@ -56,7 +52,7 @@ export default class Channel extends Command {
   }
 
   async run(msg: Message, _pargs: Map<string, ValidArgs>, _args: string[]) {
-    const info = await getChannelInformation(msg.guild.id);
+    const info = await Database.getChannelInformation(msg.guild.id);
 
     await msg.inlineReply(this.getChannelMessage(info, 0));
   }

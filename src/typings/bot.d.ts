@@ -155,4 +155,8 @@ declare module "discord-api-types/payloads" {
     extends APIMessageComponentInteraction {
     member: APIGuildMember;
   }
+
+  export interface APIGuildMember extends APIGuildMember {
+    permissions?: string;
+  }
 }

@@ -1,8 +1,6 @@
-import { Command } from "../../../classes/Command";
+import { Command, ValidArgs, Client } from "@classes";
 import colors from "tailwindcss/colors";
-import { convertHex, tagUser } from "../../../utils";
-import type { ValidArgs } from "../../../classes/Arg";
-import type Client from "../../../classes/Client";
+import { convertHex, tagUser } from "@utils";
 import type { Message } from "eris";
 
 export default class Info extends Command {

@@ -1,9 +1,6 @@
-import { SubCommand } from "../../../classes/Command";
+import { SubCommand, ValidArgs, Client, Database } from "@classes";
 import colors from "tailwindcss/colors";
-import { convertHex, tagUser } from "../../../utils";
-import { getReportForUser, getReport } from "../../../classes/Database";
-import type { ValidArgs } from "../../../classes/Arg";
-import type Client from "../../../classes/Client";
+import { convertHex, tagUser } from "@utils";
 import type { AdvancedMessageContent, InteractionPayload, Message } from "eris";
 import type {
   APIMessageComponentInteraction,
@@ -63,7 +60,7 @@ export default class ViewReports extends SubCommand {
     else if (info.hasOwnProperty("user"))
       user = (info as APIDMMessageComponentInteraction).user?.id;
     else
-      return await bot.createInteractionResponse(info.id, info.token, 6, {
+      return await bot.createInteractionResponse(info.id, info.token, 4, {
         embeds: [
           {
             title: "<:error:837489379345694750> Something went wrong",
@@ -77,13 +74,11 @@ export default class ViewReports extends SubCommand {
 
     if (!author || isNaN(page)) {
       bot.log.error(
-        `Missing/invalid information in \`report view next\` query ${JSON.stringify(
-          info,
-          null,
-          2
-        )}`
+        `Missing/invalid information in \`report view ${
+          direction > 0 ? "next" : "previous"
+        }\` query ${JSON.stringify(info, null, 2)}`
       );
-      return await bot.createInteractionResponse(info.id, info.token, 6, {
+      return await bot.createInteractionResponse(info.id, info.token, 4, {
         embeds: [
           {
             title: "<:error:837489379345694750> Something went wrong",
@@ -114,7 +109,7 @@ export default class ViewReports extends SubCommand {
     prefix = prefix.substring(prefix.indexOf("`") + 1);
     prefix = prefix.substring(0, prefix.indexOf("`") - 22);
 
-    const tickets = [...(await getReportForUser(author))];
+    const tickets = [...(await Database.getReportForUser(author))];
 
     return await bot.createInteractionResponse(
       info.id,
@@ -184,7 +179,6 @@ export default class ViewReports extends SubCommand {
         style: 1,
         custom_id: `report.view.next?a=${author.id}&p=${page}`,
       });
-    console.log(tickets);
 
     if (tickets.length === 0)
       return {
@@ -235,17 +229,18 @@ export default class ViewReports extends SubCommand {
     };
 
     if (!(reportid = pargs.get("reportid") as string | undefined)) {
-      const tickets = [...(await getReportForUser(msg.author.id))] || [];
+      const tickets =
+        [...(await Database.getReportForUser(msg.author.id))] || [];
       return await msg.channel.sendMessage(
         this.sendAllTickets(authorObject, msg.prefix || "", tickets, 1)
       );
     }
 
-    const report = await getReport(this.extractContent(msg));
+    const report = await Database.getReport(this.extractContent(msg));
 
     if (!report.userId) {
       if (!isNaN(parseInt(reportid))) {
-        const tickets = [...(await getReportForUser(msg.author.id))];
+        const tickets = [...(await Database.getReportForUser(msg.author.id))];
         return await msg.channel.sendMessage(
           this.sendAllTickets(
             authorObject,

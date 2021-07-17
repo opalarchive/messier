@@ -1,6 +1,4 @@
-import { Command } from "../../../classes/Command";
-import type { ValidArgs } from "../../../classes/Arg";
-import type Client from "../../../classes/Client";
+import { Command, Client, ValidArgs } from "@classes";
 import type { Message } from "eris";
 
 export default class Support extends Command {

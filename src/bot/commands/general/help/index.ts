@@ -1,8 +1,6 @@
-import { properCase, tagUser, convertHex } from "../../../utils";
-import { Command, SubCommand } from "../../../classes/Command";
-import type { ValidArgs } from "../../../classes/Arg";
+import { properCase, tagUser, convertHex } from "@utils";
+import { Command, SubCommand, ValidArgs, Client } from "@classes";
 import type { EmbedField, Message, MessageContent, MessageFile } from "eris";
-import type Client from "../../../classes/Client";
 import colors from "tailwindcss/colors";
 
 export default class Help extends Command {

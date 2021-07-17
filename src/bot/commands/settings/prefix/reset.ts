@@ -1,9 +1,6 @@
-import { SubCommand } from "../../../classes/Command";
+import { SubCommand, Client, ValidArgs, Database } from "@classes";
 import colors from "tailwindcss/colors";
 import { convertHex, tagUser } from "../../../utils";
-import { resetPrefixes } from "../../../classes/Database";
-import type { ValidArgs } from "../../../classes/Arg";
-import type Client from "../../../classes/Client";
 import type { Message, TextChannel } from "eris";
 
 export default class ResetPrefix extends SubCommand {
@@ -25,7 +22,7 @@ export default class ResetPrefix extends SubCommand {
     _args: string[]
   ) {
     const prefixes = [`<@${this.bot.user.id}> `].concat(
-      await resetPrefixes(msg.channel.guild.id)
+      await Database.resetPrefixes(msg.channel.guild.id)
     );
 
     return await msg.channel.sendMessage({

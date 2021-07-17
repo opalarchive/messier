@@ -1,4 +1,4 @@
-import Event from "../classes/Event";
+import { Event } from "@classes";
 import type { APIMessageComponentInteraction } from "discord-api-types/payloads";
 import type {
   GatewayDispatchEvents,
