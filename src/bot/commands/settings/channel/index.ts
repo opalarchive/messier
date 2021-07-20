@@ -1,12 +1,12 @@
 import { Command, Database, Client } from "@classes";
-import colors from "tailwindcss/colors";
+import colors from "@colors";
 import { convertHex } from "@utils";
 import type { AdvancedMessageContent, InteractionPayload, Message } from "eris";
 import type { APIMessageComponentInteraction } from "discord-api-types/payloads";
 
 export default class Channel extends Command {
   description = "View the channel settings for this server.";
-  subcommands = ["enable", "disable", "default"];
+  subcommands = ["enable", "disable", "default", "reset"];
   allowdms = false;
   cooldown = 10000;
   interactions = {

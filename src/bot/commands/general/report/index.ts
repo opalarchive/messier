@@ -1,11 +1,11 @@
 import { Command, Database } from "@classes";
-import colors from "tailwindcss/colors";
+import colors from "@colors";
 import { convertHex, tagUser, isPrivateChannel } from "@utils";
 import type { Message } from "eris";
 
 export default class Report extends Command {
   description = "A ping command to get some basic information about the bot.";
-  subcommands = [];
+  subcommands = ["view"];
   allowdms = true;
   args = [
     {

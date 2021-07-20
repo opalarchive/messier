@@ -12,6 +12,7 @@ export { default as properCase } from "./properCase";
 export { default as tagUser } from "./tagUser";
 export { default as isPrivateChannel } from "./isPrivateChannel";
 export { default as reportError } from "./reportError";
+export { default as extractContent } from "./extractContent";
 
 export function shortcuts() {
   if (!Array.prototype.last) {

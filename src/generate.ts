@@ -136,7 +136,8 @@ loadCommands(path.join(process.cwd(), "./src/bot/commands"))
   .then(() =>
     writeFile(
       path.join(process.cwd(), "./commands.json"),
-      JSON.stringify(commands, null, 2)
+      JSON.stringify(commands, null, 2),
+      { flag: "a" }
     )
   )
   .then(() => console.log("Loaded up commands.json"))

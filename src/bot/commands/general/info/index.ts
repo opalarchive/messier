@@ -1,5 +1,5 @@
 import { Command } from "@classes";
-import colors from "tailwindcss/colors";
+import colors from "@colors";
 import { convertHex, tagUser } from "@utils";
 import type { Message } from "eris";
 

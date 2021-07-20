@@ -1,7 +1,7 @@
 import * as Sentry from "@sentry/node";
 import isPrivateChannel from "./isPrivateChannel";
 import convertHex from "./convertHex";
-import colors from "tailwindcss/colors";
+import colors from "@colors";
 import config from "../config";
 import type { Message } from "eris";
 import type Client from "../classes/Client";

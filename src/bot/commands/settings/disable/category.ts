@@ -1,7 +1,7 @@
 import type { ValidArgs } from "@classes";
 import { convertHex } from "@utils";
 import type { Message } from "eris";
-import colors from "tailwindcss/colors";
+import colors from "@colors";
 import Disable from "./";
 
 export default class DisableCategory extends Disable {

@@ -1,4 +1,4 @@
-import colors from "tailwindcss/colors";
+import colors from "@colors";
 import { convertHex, isPrivateChannel, reportError } from "@utils";
 import { Command, SubCommand, Event } from "@classes";
 import type { Message } from "eris";
@@ -146,33 +146,35 @@ export class HandlerEvent extends Event {
     if (!isPrivateChannel(msg.channel)) {
       if (command.allowdisable !== false) {
         // Disabled categories
-        if (guildconfig?.disabledCategories?.includes(command.category))
-          return await msg.channel.sendMessage({
-            embeds: [
-              {
-                title: "❌ That action can't be done!",
-                description: `You tried to run the command ${command.name}, which is disabled in this guild (in fact, the entire category ${command.category} is disabled). Run this in another guild!`,
-                color: convertHex(colors.red["500"]),
-              },
-            ],
-          });
+        if (!this.bot.config.owners.includes(msg.author.id)) {
+          if (guildconfig?.disabledCategories?.includes(command.category))
+            return await msg.channel.sendMessage({
+              embeds: [
+                {
+                  title: "❌ That action can't be done!",
+                  description: `You tried to run the command ${command.name}, which is disabled in this guild (in fact, the entire category ${command.category} is disabled). Run this in another guild!`,
+                  color: convertHex(colors.red["500"]),
+                },
+              ],
+            });
 
-        // Disabled commands
-        if (
-          guildconfig?.disabledCmds?.includes(command.name) ||
-          guildconfig?.disabledCmds?.includes(
-            `${command.name}/${subcommand?.name}`
+          // Disabled commands
+          if (
+            guildconfig?.disabledCmds?.includes(command.name) ||
+            guildconfig?.disabledCmds?.includes(
+              `${command.name}/${subcommand?.name}`
+            )
           )
-        )
-          return await msg.channel.sendMessage({
-            embeds: [
-              {
-                title: "❌ That action can't be done!",
-                description: `You tried to run the command ${command.name}, which is disabled in this guild. Run this in another guild!`,
-                color: convertHex(colors.red["500"]),
-              },
-            ],
-          });
+            return await msg.channel.sendMessage({
+              embeds: [
+                {
+                  title: "❌ That action can't be done!",
+                  description: `You tried to run the command ${command.name}, which is disabled in this guild. Run this in another guild!`,
+                  color: convertHex(colors.red["500"]),
+                },
+              ],
+            });
+        }
       }
 
       // Handles staff commands
@@ -180,7 +182,8 @@ export class HandlerEvent extends Event {
         if (
           !msg.member?.permissions?.has("administrator") &&
           (!guildconfig?.staffRole ||
-            !msg.member?.roles.includes(guildconfig.staffRole || ""))
+            !msg.member?.roles.includes(guildconfig.staffRole || "")) &&
+          !this.bot.config.owners.includes(msg.author.id)
         )
           return await msg.channel.sendMessage({
             embeds: [

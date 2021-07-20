@@ -45,7 +45,8 @@
       "@utils/*": ["bot/utils/*"],
       "@commands/*": ["bot/commands/*"],
       "@events/*": ["bot/events/*"],
-      "@/*": ["bot/*"]
+      "@/*": ["bot/*"],
+      "@colors": ["bot/utils/color"]
     }
   },
   "exclude": ["node_modules"],

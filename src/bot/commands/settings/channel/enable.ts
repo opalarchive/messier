@@ -1,5 +1,5 @@
 import { SubCommand, Database, ValidArgs } from "@classes";
-import colors from "tailwindcss/colors";
+import colors from "@colors";
 import { convertHex } from "@utils";
 import { Channel, Message, Constants } from "eris";
 

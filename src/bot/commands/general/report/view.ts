@@ -1,6 +1,6 @@
 import { SubCommand, ValidArgs, Client, Database } from "@classes";
-import colors from "tailwindcss/colors";
-import { convertHex, tagUser } from "@utils";
+import colors from "@colors";
+import { convertHex, extractContent, tagUser } from "@utils";
 import type { AdvancedMessageContent, InteractionPayload, Message } from "eris";
 import type {
   APIMessageComponentInteraction,
@@ -139,15 +139,6 @@ export default class ViewReports extends SubCommand {
     }
   }
 
-  extractContent(msg: Message) {
-    let content = msg.originalContent;
-
-    content = content.substring(content.indexOf(msg.prefix || ""));
-    content = content.substring(content.indexOf(" ") + 1);
-    content = content.substring(content.indexOf(" ") + 1);
-    return content;
-  }
-
   sendAllTickets(
     author: { id: string; tag?: string; url?: string },
     prefix: string,
@@ -234,7 +225,7 @@ export default class ViewReports extends SubCommand {
       );
     }
 
-    const report = await Database.getReport(this.extractContent(msg));
+    const report = await Database.getReport(extractContent(msg, true));
 
     if (!report.userId) {
       if (!isNaN(parseInt(reportid))) {

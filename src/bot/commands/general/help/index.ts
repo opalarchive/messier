@@ -1,7 +1,7 @@
 import { properCase, tagUser, convertHex } from "@utils";
 import { Command, SubCommand, ValidArgs } from "@classes";
 import type { EmbedField, Message, MessageContent, MessageFile } from "eris";
-import colors from "tailwindcss/colors";
+import colors from "@colors";
 
 export default class Help extends Command {
   description =
@@ -73,8 +73,9 @@ export default class Help extends Command {
           title: "Messier Help",
           color: convertHex(colors[Object.keys(colors).random(1)[0]]["500"]),
           description: `Here are the categories for Messier. To find information about a category, run \`${msg.prefix}help [category]\`.`,
-          fields: Array.from(this.bot.categories.keys()).map(
-            (category: string) => ({
+          fields: Array.from(this.bot.categories.keys())
+            .filter((el) => el !== "owner")
+            .map((category: string) => ({
               name: `**${this.getEmoji(category)}  ${properCase(category)}**`,
               value: `\`${
                 this.dmUser ? this.bot.config.prefixes[0] : msg.prefix
@@ -82,8 +83,7 @@ export default class Help extends Command {
                 category
               )} ${this.getLoadedCommands(category)}")`,
               inline: false,
-            })
-          ),
+            })),
           footer: {
             text: `Ran by ${tagUser(msg.author)}`,
             icon_url: msg.author.dynamicAvatarURL(),
@@ -95,7 +95,7 @@ export default class Help extends Command {
 
   async categoryHelpCommand(msg: Message, category: string) {
     let commands;
-    if (!(commands = this.bot.categories.get(category)))
+    if (!(commands = this.bot.categories.get(category)) || category === "owner")
       throw new Error("Invalid Category");
 
     return await this.sendInfo(msg, {
@@ -131,8 +131,9 @@ export default class Help extends Command {
     higherCommand?: string
   ) {
     let subcommands: Map<string, string | SubCommand>;
-    if (!higherCommand) subcommands = new Map();
-    else subcommands = this.bot.subcommands.get(command.name) || new Map();
+    if (!higherCommand)
+      subcommands = this.bot.subcommands.get(command.name) || new Map();
+    else subcommands = new Map();
 
     const fields: EmbedField[] = [];
     const validSubcmds: string[] = [];
@@ -237,6 +238,8 @@ export default class Help extends Command {
         command = this.bot.commands.get(command);
 
       if (!command) throw new Error("Command not found");
+      if (command.owner || command.category === "owner")
+        return this.generalHelpCommand(msg);
 
       let subcommand;
       if (
@@ -246,6 +249,8 @@ export default class Help extends Command {
         while (typeof subcommand === "string")
           subcommand = this.bot.subcommands.get(command.name)?.get(subcommand);
         if (!subcommand) throw new Error("Subcommand not found");
+        if (subcommand.owner || command.category === "owner")
+          return await this.commandHelpCommand(msg, command);
         return await this.commandHelpCommand(msg, subcommand, command.name);
       }
       return await this.commandHelpCommand(msg, command);

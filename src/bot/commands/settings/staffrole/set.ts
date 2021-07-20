@@ -1,6 +1,6 @@
 import { SubCommand, ValidArgs, Database } from "@classes";
 import { convertHex } from "../../../utils";
-import colors from "tailwindcss/colors";
+import colors from "@colors";
 import type { Message, Role } from "eris";
 
 export default class SetStaff extends SubCommand {

@@ -1,5 +1,5 @@
 import { Command, Database, ValidArgs } from "@classes";
-import colors from "tailwindcss/colors";
+import colors from "@colors";
 import { convertHex } from "@utils";
 import type { Message } from "eris";
 
@@ -7,7 +7,7 @@ export default class Disable extends Command {
   description =
     "This allows the disabling of commands or categories (other than ones that can never be disabled).";
   public disable: boolean = true;
-  subcommands = ["enable", "disable", "default"];
+  subcommands = ["list", "category", "command"];
   allowdms = false;
   cooldown = 20000;
   allowdisable = false;
@@ -21,6 +21,17 @@ export default class Disable extends Command {
   ];
 
   async disableCategory(category: string, msg: Message) {
+    if (category === "owner")
+      return await msg.inlineReply({
+        embeds: [
+          {
+            title: "This category can't be disabled.",
+            description: `This particular category can not be disabled - it is probably a core category.`,
+            color: convertHex(colors.red["500"]),
+          },
+        ],
+      });
+
     await Database.disableCategory(msg.guild.id, category, this.disable);
     return await msg.inlineReply({
       embeds: [
@@ -42,7 +53,7 @@ export default class Disable extends Command {
         `Command ${cmd} suddenly disappeared from the list of commands.`
       );
 
-    if (!cmd.allowdisable)
+    if (!cmd.allowdisable || cmd.owner || cmd.category === "owner")
       return await msg.inlineReply({
         embeds: [
           {
