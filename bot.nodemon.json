@@ -3,5 +3,5 @@
   "watch": ["src/bot"],
   "exec": "cross-env NODE_ENV=development ts-node -r tsconfig-paths/register --files ./src/bot/index.ts",
   "ext": "ts",
-  "restart": "rs-bot"
+  "restartable": "rs-bot"
 }

@@ -1,4 +1,4 @@
-import { SubCommand, Database, ValidArgs, Client } from "@classes";
+import { SubCommand, Database, ValidArgs } from "@classes";
 import colors from "tailwindcss/colors";
 import { convertHex, tagUser } from "../../../utils";
 import type { Message, TextChannel } from "eris";
@@ -15,21 +15,9 @@ export default class RemovePrefix extends SubCommand {
     },
   ];
   staff = true;
+  aliases = ["yeet"];
 
-  constructor(
-    protected bot: Client,
-    public name: string,
-    public category: string
-  ) {
-    super(bot, name, category);
-    this.aliases = ["yeet"];
-  }
-
-  async run(
-    msg: Message<TextChannel>,
-    pargs: Map<string, ValidArgs>,
-    _args: string[]
-  ) {
+  async run(msg: Message<TextChannel>, pargs: Map<string, ValidArgs>) {
     let prefix = (pargs.get("prefix") || "") as string;
     try {
       const prefixes = [`<@${this.bot.user.id}> `].concat(

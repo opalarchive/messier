@@ -1,4 +1,4 @@
-import { SubCommand, Client, ValidArgs, Database } from "@classes";
+import { SubCommand, ValidArgs, Database } from "@classes";
 import { convertHex } from "../../../utils";
 import colors from "tailwindcss/colors";
 import type { Message, Role } from "eris";
@@ -14,17 +14,10 @@ export default class SetStaff extends SubCommand {
       optional: false,
     },
   ];
+  cooldown = 60000;
+  aliases = ["add"];
 
-  constructor(
-    protected bot: Client,
-    public name: string,
-    public category: string
-  ) {
-    super(bot, name, category);
-    this.aliases = ["add"];
-  }
-
-  async run(msg: Message, pargs: Map<string, ValidArgs>, _args: string[]) {
+  async run(msg: Message, pargs: Map<string, ValidArgs>) {
     const role = pargs.get("staffrole") as Role | undefined;
 
     if (!role)

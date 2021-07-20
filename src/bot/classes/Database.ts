@@ -39,6 +39,8 @@ export async function getGuildConfig(
         })
     )
   );
+  guildInfo.channelDefaultDisable =
+    (guildInfo?.channelDefaultDisable as any) === "true"; // fix later too lazy
 
   return guildInfo;
 }
@@ -184,4 +186,64 @@ export async function setChannel(
 
 export async function clearChannel(guild: string) {
   return await redis.del(`${getGuildLocation(guild)}.channelList`);
+}
+
+export async function channelDefaultDisable(guild: string) {
+  return (
+    (await redis.hget(getGuildLocation(guild), "channelDefaultDisable")) ===
+    "true"
+  );
+}
+
+export async function setChannelDefaultDisable(
+  guild: string,
+  disable?: boolean
+) {
+  return await Promise.all([
+    await clearChannel(guild),
+    await redis.hset(getGuildLocation(guild), {
+      channelDefaultDisable: `${disable}`,
+    }),
+  ]);
+}
+
+export async function disableCategory(
+  guild: string,
+  category: string,
+  disable: boolean
+) {
+  await (disable ? redis.sadd : redis.srem)(
+    `${getGuildLocation(guild)}.disabledCategories`,
+    category
+  );
+}
+
+export async function disableCmd(
+  guild: string,
+  command: string,
+  disable: boolean
+) {
+  await (disable ? redis.sadd : redis.srem)(
+    `${getGuildLocation(guild)}.disabledCmds`,
+    command
+  );
+}
+
+export async function disableList(guild: string) {
+  let info: { commands?: string[]; categories?: string[] } = {};
+
+  await Promise.all([
+    await (async () => {
+      info.categories = await redis.smembers(
+        `${getGuildLocation(guild)}.disabledCategories`
+      );
+    })(),
+    await (async () => {
+      info.commands = await redis.smembers(
+        `${getGuildLocation(guild)}.disabledCmds`
+      );
+    })(),
+  ]);
+
+  return info;
 }

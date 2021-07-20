@@ -1,4 +1,4 @@
-import { Command, ValidArgs, Client, Database } from "@classes";
+import { Command, Database } from "@classes";
 import colors from "tailwindcss/colors";
 import { convertHex, tagUser, isPrivateChannel } from "@utils";
 import type { Message } from "eris";
@@ -16,28 +16,21 @@ export default class Report extends Command {
     },
   ];
   cooldown = 10000;
-
-  constructor(
-    protected bot: Client,
-    public name: string,
-    public category: string
-  ) {
-    super(bot, name, category);
-    this.aliases = ["bug"];
-  }
+  allowdisable = false;
+  aliases = ["bug"];
 
   extractContent(msg: Message) {
-    let content = msg.originalContent;
+    let content = msg.originalContent.concat(" ");
 
     content = content.substring(content.indexOf(msg.prefix || ""));
-    content = content.substring(content.indexOf(" ") + 1);
+    content = content.substring(content.regexIndexOf(/\s/g) + 1);
     return content;
   }
 
-  async run(msg: Message, pargs: Map<string, ValidArgs>, _args: string[]) {
-    if (!pargs.get("bug")) throw new Error("There was no bug reported.");
+  async run(msg: Message) {
+    const report = this.extractContent(msg).trim();
 
-    const report = this.extractContent(msg);
+    if (!report) throw new Error("There was no bug reported.");
 
     const uid = await Database.addReport(
       msg.author.id,

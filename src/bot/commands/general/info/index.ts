@@ -1,4 +1,4 @@
-import { Command, ValidArgs, Client } from "@classes";
+import { Command } from "@classes";
 import colors from "tailwindcss/colors";
 import { convertHex, tagUser } from "@utils";
 import type { Message } from "eris";
@@ -8,17 +8,9 @@ export default class Info extends Command {
   subcommands = [];
   allowdms = true;
   cooldown = 5000;
+  aliases = ["i", "aboutme", "more"];
 
-  constructor(
-    protected bot: Client,
-    public name: string,
-    public category: string
-  ) {
-    super(bot, name, category);
-    this.aliases = ["i", "aboutme", "more"];
-  }
-
-  async run(msg: Message, _pargs: Map<string, ValidArgs>, _args: string[]) {
+  async run(msg: Message) {
     return await msg.channel.sendMessage({
       embeds: [
         {
@@ -31,6 +23,9 @@ export default class Info extends Command {
           description:
             "I'm Messier, a Discord Bot used to fetch statements and more information about math problems! Here's some information about me!",
           color: convertHex(colors.teal["500"]),
+          image: {
+            url: "https://media1.tenor.com/images/2b6de38e2dab7606a5cc2c224a5477b6/tenor.gif?itemid=4656109",
+          },
           footer: {
             text: `Ran by ${tagUser(msg.author)}`,
             icon_url: msg.author.dynamicAvatarURL(),

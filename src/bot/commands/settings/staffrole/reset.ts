@@ -1,4 +1,4 @@
-import { SubCommand, ValidArgs, Client, Database } from "@classes";
+import { SubCommand, Database } from "@classes";
 import { convertHex } from "../../../utils";
 import colors from "tailwindcss/colors";
 import type { Message } from "eris";
@@ -7,17 +7,10 @@ export default class SetStaff extends SubCommand {
   description =
     "Reset the staffrole for the server. Requires administrator permissions.";
   reqperms = ["administrator"];
+  cooldown = 60000;
+  aliases = ["none"];
 
-  constructor(
-    protected bot: Client,
-    public name: string,
-    public category: string
-  ) {
-    super(bot, name, category);
-    this.aliases = ["none"];
-  }
-
-  async run(msg: Message, _pargs: Map<string, ValidArgs>, _args: string[]) {
+  async run(msg: Message) {
     await Database.setStaffRole(msg.guild.id, "");
 
     return await msg.inlineReply({

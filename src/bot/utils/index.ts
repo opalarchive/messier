@@ -37,4 +37,10 @@ export function shortcuts() {
       return result;
     };
   }
+  if (!String.prototype.regexIndexOf) {
+    String.prototype.regexIndexOf = function (regex: RegExp, start: number) {
+      const index = this.substring(start || 0).search(regex);
+      return index >= 0 ? index + (start || 0) : index;
+    };
+  }
 }

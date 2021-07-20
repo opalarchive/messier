@@ -122,7 +122,7 @@ export class HandlerEvent extends Event {
 
     // Handles owner commands
     if (
-      (command.owner || subcommand?.owner) &&
+      (command.owner || subcommand?.owner || command.category === "owner") &&
       !this.bot.config.owners.includes(msg.author.id)
     )
       return;
@@ -291,13 +291,37 @@ export class HandlerEvent extends Event {
     }
 
     // Handles command cooldowns
-    if (command.cooldown && !this.bot.config.owners.includes(msg.author.id)) {
-      const cooldown = this.bot.cooldowns.get(command.name + msg.author.id);
+    if (
+      (command.cooldown || subcommand?.cooldown) &&
+      !this.bot.config.owners.includes(msg.author.id)
+    ) {
+      const cooldown = this.bot.cooldowns.get(
+        `${command.name}.${msg.author.id}`
+      );
       if (cooldown) return await msg.addReaction("⌛");
-      this.bot.cooldowns.set(command.name + msg.author.id, new Date());
+      this.bot.cooldowns.set(`${command.name}.${msg.author.id}`, new Date());
       setTimeout(() => {
-        this.bot.cooldowns.delete((command as Command).name + msg.author.id);
+        this.bot.cooldowns.delete(
+          `${(command as Command).name}.${msg.author.id}`
+        );
       }, command.cooldown);
+      if (subcommand && subcommand.cooldown) {
+        const cooldown = this.bot.cooldowns.get(
+          `${command.name}.${subcommand.name}.${msg.author.id}`
+        );
+        if (cooldown) return await msg.addReaction("⌛");
+        this.bot.cooldowns.set(
+          `${command.name}.${subcommand.name}.${msg.author.id}`,
+          new Date()
+        );
+        setTimeout(() => {
+          this.bot.cooldowns.delete(
+            `${(command as Command).name}.${(subcommand as SubCommand).name}.${
+              msg.author.id
+            }`
+          );
+        }, subcommand.cooldown);
+      }
     }
 
     // Handles command arguments
@@ -307,7 +331,7 @@ export class HandlerEvent extends Event {
       const cmdArgs = subcommand ? subcommand.args : command.args;
       parsedArgs = await this.bot.args.parse(cmdArgs, args.join(" "), msg);
       const missingargs = cmdArgs.filter((el) => {
-        return !el.optional && parsedArgs.get(el.name) === undefined;
+        return !el.optional && !parsedArgs.get(el.name);
       });
 
       if (missingargs.length) {

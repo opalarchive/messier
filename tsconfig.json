@@ -44,7 +44,8 @@
       "@classes/*": ["bot/classes/*"],
       "@utils/*": ["bot/utils/*"],
       "@commands/*": ["bot/commands/*"],
-      "@events/*": ["bot/events/*"]
+      "@events/*": ["bot/events/*"],
+      "@/*": ["bot/*"]
     }
   },
   "exclude": ["node_modules"],

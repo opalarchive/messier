@@ -1,7 +1,7 @@
-import { SubCommand, Database, ValidArgs, Client } from "@classes";
+import { SubCommand, Database, ValidArgs } from "@classes";
 import colors from "tailwindcss/colors";
 import { convertHex } from "@utils";
-import type { Channel, Message } from "eris";
+import { Channel, Message, Constants } from "eris";
 
 export default class EnableChannel extends SubCommand {
   allowdms = false;
@@ -12,22 +12,12 @@ export default class EnableChannel extends SubCommand {
       optional: false,
     },
   ];
-  public description: string;
-  public enable: boolean;
+  description = "Allow members to use commands in a certain channel.";
+  public enable: boolean = true;
   staff = true;
+  aliases = ["allow"];
 
-  constructor(
-    protected bot: Client,
-    public name: string,
-    public category: string
-  ) {
-    super(bot, name, category);
-    this.aliases = ["allow"];
-    this.enable = true;
-    this.description = "Allow members to use commands in a certain channel.";
-  }
-
-  async run(msg: Message, pargs: Map<string, ValidArgs>, _args: string[]) {
+  async run(msg: Message, pargs: Map<string, ValidArgs>) {
     const channel = pargs.get("channel") as Channel | undefined;
 
     if (!channel)
@@ -42,6 +32,26 @@ export default class EnableChannel extends SubCommand {
                 value: `To find more information, run \`${msg.prefix}help channel enable\`.`,
               },
             ],
+            color: convertHex(colors.red["500"]),
+          },
+        ],
+      });
+
+    const types = Constants.ChannelTypes;
+    if (
+      ![
+        types.GUILD_NEWS,
+        types.GUILD_NEWS_THREAD,
+        types.GUILD_PRIVATE_THREAD,
+        types.GUILD_PUBLIC_THREAD,
+        types.GUILD_TEXT,
+      ].some((el) => el === channel.type)
+    )
+      return await msg.inlineReply({
+        embeds: [
+          {
+            title: "⛔ That's not a text channel.",
+            description: `You tried to run the command channel, which requires a text channel to be provided. Please make sure to give me a text channel and not a voice (or other) channel.`,
             color: convertHex(colors.red["500"]),
           },
         ],

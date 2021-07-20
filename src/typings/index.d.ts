@@ -17,3 +17,9 @@ interface ParsedArgs {
   type: string;
   value?: any;
 }
+
+interface String {
+  regexIndexOf(regex: RegExp, start?: number): number;
+}
+
+type PromiseLike<T> = T | Promise<T>;

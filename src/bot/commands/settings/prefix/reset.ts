@@ -1,4 +1,4 @@
-import { SubCommand, Client, ValidArgs, Database } from "@classes";
+import { SubCommand, Database } from "@classes";
 import colors from "tailwindcss/colors";
 import { convertHex, tagUser } from "../../../utils";
 import type { Message, TextChannel } from "eris";
@@ -7,20 +7,9 @@ export default class ResetPrefix extends SubCommand {
   description = "Reset the prefixes of the bot.";
   allowdms = false;
   staff = true;
+  cooldown = 60000;
 
-  constructor(
-    protected bot: Client,
-    public name: string,
-    public category: string
-  ) {
-    super(bot, name, category);
-  }
-
-  async run(
-    msg: Message<TextChannel>,
-    _pargs: Map<string, ValidArgs>,
-    _args: string[]
-  ) {
+  async run(msg: Message<TextChannel>) {
     const prefixes = [`<@${this.bot.user.id}> `].concat(
       await Database.resetPrefixes(msg.channel.guild.id)
     );

@@ -1,21 +1,13 @@
-import { Command, ValidArgs, Client, Database } from "@classes";
+import { Command, Database } from "@classes";
 import type { Message } from "eris";
 
 export default class Staff extends Command {
   description = "View the current staff role for the server.";
   subcommands = ["set", "reset"];
   cooldown = 10000;
+  aliases = ["staff"];
 
-  constructor(
-    protected bot: Client,
-    public name: string,
-    public category: string
-  ) {
-    super(bot, name, category);
-    this.aliases = ["staff"];
-  }
-
-  async run(msg: Message, _pargs: Map<string, ValidArgs>, _args: string[]) {
+  async run(msg: Message) {
     const role = await Database.getStaffRole(msg.guild.id);
 
     if (!role)

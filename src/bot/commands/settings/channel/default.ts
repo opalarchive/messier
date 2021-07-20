@@ -1,4 +1,4 @@
-import { SubCommand, Client, Database } from "@classes";
+import { SubCommand, ValidArgs, Client, Database } from "@classes";
 import colors from "tailwindcss/colors";
 import { convertHex } from "@utils";
 import { Message, Permission } from "eris";
@@ -7,28 +7,39 @@ import type {
   APIGuildMessageComponentInteraction,
 } from "discord-api-types/payloads";
 
-export default class ResetChannel extends SubCommand {
+export default class DefaultChannel extends SubCommand {
   allowdms = false;
+  description =
+    "Change the default channel preset to enabled or disabled. Requires administrator permissions.";
   reqperms = ["administrator"];
   interactions = {
-    "channel.reset": (
+    "channel.enable": (
       params: URLSearchParams,
       info: APIMessageComponentInteraction
-    ) => this.reset(params, info, this.bot, true),
-    "channel.no-reset": (
+    ) => this.reset(params, info, this.bot, "e"),
+    "channel.disable": (
       params: URLSearchParams,
       info: APIMessageComponentInteraction
-    ) => this.reset(params, info, this.bot, false),
+    ) => this.reset(params, info, this.bot, "d"),
+    "channel.no-default": (
+      params: URLSearchParams,
+      info: APIMessageComponentInteraction
+    ) => this.reset(params, info, this.bot, "n"),
   };
+  args = [
+    {
+      name: "toEnable",
+      type: "string",
+      optional: false,
+    },
+  ];
   cooldown = 60000;
-  description =
-    "Reset all channel preferences. Requires administrator permissions.";
 
   async reset(
     params: URLSearchParams,
     info: APIMessageComponentInteraction,
     bot: Client,
-    reset: boolean
+    type: string
   ) {
     const guild = params.get("g");
     let isAdmin: boolean;
@@ -65,7 +76,7 @@ export default class ResetChannel extends SubCommand {
         components: [],
       });
       throw new Error(
-        `Missing/invalid information in \`channel reset\` query ${JSON.stringify(
+        `Missing/invalid information in \`channel default\` query ${JSON.stringify(
           info,
           null,
           2
@@ -86,38 +97,63 @@ export default class ResetChannel extends SubCommand {
         flags: 1 << 6,
       });
 
-    if (reset) {
-      await Database.clearChannel(guild);
-      return await bot.createInteractionResponse(info.id, info.token, 7, {
-        content: "All channels reset!",
-        components: [],
-      });
-    } else
+    if (type === "n")
       return await bot.createInteractionResponse(info.id, info.token, 7, {
         content: "Action cancelled!",
         components: [],
       });
+    else {
+      Database.setChannelDefaultDisable(guild, type === "d");
+      return await bot.createInteractionResponse(info.id, info.token, 7, {
+        content: `By default, channels will now be ${
+          type === "d" ? "disabled" : "enabled"
+        }!`,
+        components: [],
+      });
+    }
   }
 
-  async run(msg: Message) {
+  async run(msg: Message, pargs: Map<string, ValidArgs>) {
+    const toEnable = pargs.get("toEnable") as string | undefined;
+    if (
+      !toEnable ||
+      !["d", "e"].some((el) => toEnable.toLowerCase().startsWith(el))
+    )
+      return await msg.inlineReply(
+        "You need to tell me whether to **enable (e)** or **disable (d)** channels by default"
+      );
+
+    const disable = toEnable.startsWith("d");
+    const curr = await Database.channelDefaultDisable(msg.guild.id);
+
+    if (disable === curr)
+      return await msg.inlineReply(
+        `You chose to ${
+          disable ? "disable" : "enable"
+        } channels, but this is already the default!`
+      );
+
     return await msg.inlineReply({
-      content:
-        "Are you **absolutely sure** you want to reset all channel settings? This does not change the default for new channels (enable/disable).",
+      content: `Are you **absolutely sure** you want to reset all channel settings, and also change the default to ${
+        disable ? "disabled" : "enabled"
+      } channels?`,
       components: [
         {
           type: 1,
           components: [
             {
               type: 2,
-              label: "Reset Values, I'm Sure!",
+              label: "Change Default, I'm Sure!",
               style: 3,
-              custom_id: `channel.reset?g=${msg.guild.id}`,
+              custom_id: `channel.${disable ? "disable" : "enable"}?g=${
+                msg.guild.id
+              }`,
             },
             {
               type: 2,
               label: "Nevermind, Don't Reset!",
               style: 4,
-              custom_id: `channel.no-reset?g=${msg.guild.id}`,
+              custom_id: `channel.no-default?g=${msg.guild.id}`,
             },
           ],
         },

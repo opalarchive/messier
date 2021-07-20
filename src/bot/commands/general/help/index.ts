@@ -1,10 +1,11 @@
 import { properCase, tagUser, convertHex } from "@utils";
-import { Command, SubCommand, ValidArgs, Client } from "@classes";
+import { Command, SubCommand, ValidArgs } from "@classes";
 import type { EmbedField, Message, MessageContent, MessageFile } from "eris";
 import colors from "tailwindcss/colors";
 
 export default class Help extends Command {
-  public description: string;
+  description =
+    "The help command for the bot. Add a command, category, or subcommand after this to get specific information.";
   subcommands = ["dm"];
   allowdisable = false;
   allowdms = true;
@@ -16,24 +17,15 @@ export default class Help extends Command {
       absorb: true,
     },
   ];
-  public dmUser: boolean;
+  public dmUser: boolean = false;
   cooldown = 5000;
-
-  constructor(
-    protected bot: Client,
-    public name: string,
-    public category: string
-  ) {
-    super(bot, name, category);
-    this.aliases = ["h", "listcmds", "listcommands", "commands"];
-    this.dmUser = false;
-    this.description =
-      "The help command for the bot. Add a command, category, or subcommand after this to get specific information.";
-  }
+  aliases = ["h", "listcmds", "listcommands", "commands", "cmds"];
 
   getEmoji(category: string) {
     switch (category) {
       case "general":
+        return "<:info:837490084302946324>";
+      case "settings":
         return "⚙️";
       default:
         return "❓";
@@ -44,6 +36,8 @@ export default class Help extends Command {
     switch (category) {
       case "general":
         return `General commands about the bot, such as ping latency, prefixes, invites, and more.`;
+      case "settings":
+        return `Commands that relate to settings, such as channel enabling, staff roles, and prefixes.`;
       default:
         return "❓";
     }
@@ -226,11 +220,11 @@ export default class Help extends Command {
     });
   }
 
-  async run(msg: Message, parsedArgs: Map<string, ValidArgs>, _args: string[]) {
-    if (!parsedArgs.get("command")) return await this.generalHelpCommand(msg);
+  async run(msg: Message, pargs: Map<string, ValidArgs>) {
+    if (!pargs.get("command")) return await this.generalHelpCommand(msg);
 
     const firstArg =
-      (parsedArgs.get("command") as string | undefined)?.split(" ")[0] || "";
+      (pargs.get("command") as string | undefined)?.split(" ")[0] || "";
 
     if (this.bot.categories.get(firstArg))
       return await this.categoryHelpCommand(msg, firstArg);
@@ -238,7 +232,7 @@ export default class Help extends Command {
     let command;
     if ((command = this.bot.commands.get(firstArg))) {
       const secondArg =
-        (parsedArgs.get("command") as string | undefined)?.split(" ")[1] || "";
+        (pargs.get("command") as string | undefined)?.split(" ")[1] || "";
       while (typeof command === "string")
         command = this.bot.commands.get(command);
 

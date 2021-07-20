@@ -1,4 +1,4 @@
-import { Command, ValidArgs, Client } from "@classes";
+import { Command } from "@classes";
 import colors from "tailwindcss/colors";
 import { convertHex, tagUser, isPrivateChannel } from "@utils";
 import type { Message } from "eris";
@@ -8,17 +8,11 @@ export default class Ping extends Command {
   subcommands = [];
   allowdms = true;
   cooldown = 5000;
+  allowdisable = false;
 
-  constructor(
-    protected bot: Client,
-    public name: string,
-    public category: string
-  ) {
-    super(bot, name, category);
-    this.aliases = ["pong", "wassup"];
-  }
+  aliases = ["pong", "wassup"];
 
-  async run(msg: Message, _pargs: Map<string, ValidArgs>, _args: string[]) {
+  async run(msg: Message) {
     const pingmsg = await msg.channel.sendMessage({
       embeds: [
         {

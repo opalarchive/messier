@@ -33,14 +33,6 @@ export default class ViewReports extends SubCommand {
     ) => this.switchPage(params, info, this.bot, -1),
   };
 
-  constructor(
-    protected bot: Client,
-    public name: string,
-    public category: string
-  ) {
-    super(bot, name, category);
-  }
-
   async switchPage(
     params: URLSearchParams,
     info: APIMessageComponentInteraction,
@@ -73,12 +65,7 @@ export default class ViewReports extends SubCommand {
       });
 
     if (!author || isNaN(page)) {
-      bot.log.error(
-        `Missing/invalid information in \`report view ${
-          direction > 0 ? "next" : "previous"
-        }\` query ${JSON.stringify(info, null, 2)}`
-      );
-      return await bot.createInteractionResponse(info.id, info.token, 4, {
+      await bot.createInteractionResponse(info.id, info.token, 4, {
         embeds: [
           {
             title: "<:error:837489379345694750> Something went wrong",
@@ -87,8 +74,17 @@ export default class ViewReports extends SubCommand {
             color: convertHex(colors.red["500"]),
           },
         ],
-        flags: 1 << 6,
       });
+      this.bot.editMessage(info.message.channel_id, info.message.id, {
+        components: [],
+      });
+      throw new Error(
+        `Missing/invalid information in \`report view next\` query ${JSON.stringify(
+          info,
+          null,
+          2
+        )}`
+      );
     }
 
     if (user !== author) {
@@ -183,6 +179,8 @@ export default class ViewReports extends SubCommand {
     if (tickets.length === 0)
       return {
         content: `You need to create a ticket first; you can use \`${prefix}report [bug]\` to create a report.`,
+        embeds: [],
+        components: [],
       };
 
     const returnContent: AdvancedMessageContent = {
@@ -219,7 +217,7 @@ export default class ViewReports extends SubCommand {
     return returnContent;
   }
 
-  async run(msg: Message, pargs: Map<string, ValidArgs>, _args: string[]) {
+  async run(msg: Message, pargs: Map<string, ValidArgs>) {
     let reportid;
 
     const authorObject = {

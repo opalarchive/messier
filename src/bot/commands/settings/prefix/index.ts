@@ -1,4 +1,4 @@
-import { Command, Database, ValidArgs, Client } from "@classes";
+import { Command, Database } from "@classes";
 import colors from "tailwindcss/colors";
 import { convertHex, tagUser, isPrivateChannel } from "../../../utils";
 import type { Message } from "eris";
@@ -8,18 +8,10 @@ export default class Prefix extends Command {
     "Get the bot's current prefix, set a new prefix, or remove a prefix.";
   subcommands = ["add", "remove", "reset"];
   allowdms = true;
-  cooldown = 5000;
+  cooldown = 20000;
+  aliases = ["pre"];
 
-  constructor(
-    protected bot: Client,
-    public name: string,
-    public category: string
-  ) {
-    super(bot, name, category);
-    this.aliases = ["pre"];
-  }
-
-  async run(msg: Message, _pargs: Map<string, ValidArgs>, _args: string[]) {
+  async run(msg: Message) {
     let prefixes: string[] = this.bot.config.prefixes;
 
     if (!isPrivateChannel(msg.channel)) {
